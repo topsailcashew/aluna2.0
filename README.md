@@ -159,3 +159,4 @@ chosen Light while their OS is dark.
 Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Firebase Auth &
 Firestore · Recharts · Framer Motion · Zod · React Hook Form · next-themes ·
 Sonner · Web Audio API
+# aluna2.0
