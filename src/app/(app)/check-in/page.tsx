@@ -11,6 +11,7 @@ import { StepProgress } from "@/components/check-in/step-progress";
 import { ThoughtStep } from "@/components/check-in/thought-step";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/firebase/auth-context";
+import { useVault } from "@/lib/crypto/vault";
 import { createEntry } from "@/lib/firebase/entries";
 import { checkInSchema, type LoggedSensation } from "@/lib/schemas";
 
@@ -19,6 +20,7 @@ const STEP_TITLES = ["Body check-in", "Emotion map", "Mind observation"] as cons
 
 export default function CheckInPage() {
   const { user } = useAuth();
+  const { dataKey } = useVault();
   const router = useRouter();
   const topRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +54,10 @@ export default function CheckInPage() {
 
   const submit = async () => {
     if (!user) return;
+    if (!dataKey) {
+      toast.error("Your entries are locked. Unlock them and try again.");
+      return;
+    }
 
     const parsed = checkInSchema.safeParse({
       sensations: sensations.map(({ bodyPart, intensity, note }) => ({
@@ -77,7 +83,7 @@ export default function CheckInPage() {
 
     setSubmitting(true);
     try {
-      await createEntry(user.uid, parsed.data);
+      await createEntry(user.uid, dataKey, parsed.data);
       toast.success("Check-in saved — thank you for noticing");
       router.push("/dashboard");
     } catch (error) {

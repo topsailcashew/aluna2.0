@@ -1,5 +1,6 @@
 import {
   EMOTIONS,
+  primaryIdsFrom,
   PRIMARY_BY_ID,
   type PrimaryEmotion,
   type PrimaryEmotionId,
@@ -56,7 +57,7 @@ export function emotionDistribution(entries: CheckInEntry[]): EmotionSlice[] {
   for (const entry of entries) {
     // One vote per category per entry, so a person who picks six shades of
     // "sad" in one sitting doesn't outweigh six separate sad days.
-    for (const primary of new Set(entry.primaryEmotions)) {
+    for (const primary of primaryIdsFrom(entry.emotions)) {
       counts.set(primary, (counts.get(primary) ?? 0) + 1);
     }
   }
@@ -153,7 +154,7 @@ export function weekStrip(entries: CheckInEntry[], now = new Date()): DayMood[] 
 
     const counts = new Map<string, number>();
     for (const entry of dayEntries) {
-      for (const primary of new Set(entry.primaryEmotions)) {
+      for (const primary of primaryIdsFrom(entry.emotions)) {
         counts.set(primary, (counts.get(primary) ?? 0) + 1);
       }
     }

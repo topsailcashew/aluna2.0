@@ -26,12 +26,12 @@ interface AuthContextValue {
   /** True until Firebase has reported the initial auth state. */
   loading: boolean;
   configured: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<User>;
   signUp: (
     displayName: string,
     email: string,
     password: string,
-  ) => Promise<void>;
+  ) => Promise<User>;
   signOut: () => Promise<void>;
 }
 
@@ -61,6 +61,8 @@ export function authErrorMessage(error: unknown): string {
       return "Too many attempts. Please wait a moment and try again.";
     case "auth/network-request-failed":
       return "Network problem. Check your connection and try again.";
+    case "auth/requires-recent-login":
+      return "Please sign in again before making this change.";
     default:
       return error instanceof Error
         ? error.message
@@ -85,7 +87,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
-    await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+    const credential = await signInWithEmailAndPassword(
+      getFirebaseAuth(),
+      email,
+      password,
+    );
+    return credential.user;
   }, []);
 
   const signUp = useCallback(
@@ -99,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // updateProfile doesn't re-fire onAuthStateChanged; nudge a re-render so
       // the new name reaches the UI.
       bumpProfile();
+      return credential.user;
     },
     [],
   );

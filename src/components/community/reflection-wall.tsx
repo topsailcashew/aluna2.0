@@ -9,7 +9,11 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { PRIMARY_BY_ID, type PrimaryEmotionId } from "@/lib/data/emotions";
+import {
+  primaryIdsFrom,
+  PRIMARY_BY_ID,
+  type PrimaryEmotionId,
+} from "@/lib/data/emotions";
 import { weeklyPrompt } from "@/lib/data/prompts";
 import {
   MAX_REFLECTION_LENGTH,
@@ -51,7 +55,7 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
     try {
       // Tags the post with the family behind the poster's latest check-in, so
       // the card can carry a colour without naming a specific feeling.
-      const latest = entries[0]?.primaryEmotions[0];
+      const latest = entries[0] ? primaryIdsFrom(entries[0].emotions)[0] : undefined;
       const tag = latest && PRIMARY_BY_ID.has(latest as PrimaryEmotionId)
         ? (latest as PrimaryEmotionId)
         : null;

@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/lib/firebase/auth-context";
+import { VaultProvider } from "@/lib/crypto/vault";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import "./globals.css";
 
@@ -41,7 +42,7 @@ export default function RootLayout({
       <body className={`${jakarta.variable} antialiased`}>
         <ThemeProvider>
           <AuthProvider>
-            {children}
+            <VaultProvider>{children}</VaultProvider>
             <Toaster
               position="top-center"
               richColors

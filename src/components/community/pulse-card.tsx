@@ -5,7 +5,7 @@ import { Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { Card, CardSubtitle, CardTitle } from "@/components/ui/card";
-import { EMOTIONS } from "@/lib/data/emotions";
+import { EMOTIONS, primaryIdsFrom } from "@/lib/data/emotions";
 import { dayKey } from "@/lib/data/prompts";
 import {
   contributeToPulse,
@@ -52,7 +52,7 @@ export function PulseCard({ pulse, entries, optedIn }: PulseCardProps) {
   const todaysPrimary = (() => {
     const today = dayKey();
     const entry = entries.find((item) => dayKey(item.createdAt) === today);
-    return entry?.primaryEmotions[0] ?? null;
+    return entry ? (primaryIdsFrom(entry.emotions)[0] ?? null) : null;
   })();
 
   const contribute = async () => {

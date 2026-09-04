@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { useAuth } from "@/lib/firebase/auth-context";
+import { useVault } from "@/lib/crypto/vault";
+import {
+  SetUpEncryptionScreen,
+  UnlockScreen,
+} from "@/components/crypto/unlock-screen";
 import { SetupNotice } from "@/components/layout/setup-notice";
 
 /**
@@ -13,6 +18,7 @@ import { SetupNotice } from "@/components/layout/setup-notice";
  */
 export function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, configured } = useAuth();
+  const { status } = useVault();
   const router = useRouter();
 
   useEffect(() => {
@@ -31,6 +37,21 @@ export function AuthGate({ children }: { children: ReactNode }) {
       </div>
     );
   }
+
+  // Signed in is not the same as able to read anything: the data key lives
+  // only in memory, so a reload lands here.
+  if (status === "loading") {
+    return (
+      <div className="grid min-h-dvh place-items-center">
+        <div className="flex flex-col items-center gap-3 text-ink-subtle">
+          <Loader2 className="size-6 animate-spin" aria-hidden />
+          <p className="text-sm font-semibold">Unlocking your space…</p>
+        </div>
+      </div>
+    );
+  }
+  if (status === "absent") return <SetUpEncryptionScreen />;
+  if (status === "locked") return <UnlockScreen />;
 
   return <>{children}</>;
 }

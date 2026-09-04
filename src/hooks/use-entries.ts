@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { useAuth } from "@/lib/firebase/auth-context";
 import { subscribeToEntries } from "@/lib/firebase/entries";
+import { useVault } from "@/lib/crypto/vault";
 import type { CheckInEntry } from "@/lib/types";
 
 interface EntriesState {
@@ -19,17 +20,23 @@ interface Snapshot {
   error: string | null;
 }
 
-/** Live view of the signed-in user's check-ins, newest first. */
+/**
+ * Live view of the signed-in user's check-ins, newest first, already
+ * decrypted. Produces nothing until the vault is unlocked — there is no key
+ * to read them with before that.
+ */
 export function useEntries(): EntriesState {
   const { user, configured } = useAuth();
+  const { dataKey } = useVault();
   const [snapshot, setSnapshot] = useState<Snapshot | null>(null);
 
   useEffect(() => {
-    if (!configured || !user) return;
+    if (!configured || !user || !dataKey) return;
     const uid = user.uid;
 
     return subscribeToEntries(
       uid,
+      dataKey,
       (entries) => setSnapshot({ uid, entries, error: null }),
       (error) =>
         setSnapshot({
@@ -40,7 +47,7 @@ export function useEntries(): EntriesState {
             : "We couldn't load your entries. Please try again.",
         }),
     );
-  }, [configured, user]);
+  }, [configured, user, dataKey]);
 
   if (!configured || !user) {
     return { entries: [], loading: false, error: null };

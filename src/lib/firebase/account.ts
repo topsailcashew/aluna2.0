@@ -29,12 +29,20 @@ async function reauthenticate(user: User, password: string): Promise<void> {
   await reauthenticateWithCredential(user, credential);
 }
 
+/**
+ * Changing the password re-wraps the data key as part of the same operation.
+ * `rewrap` runs first: if it failed after the Firebase password had already
+ * changed, the account would still be signed in but permanently unable to open
+ * its own entries.
+ */
 export async function changePassword(
   user: User,
   currentPassword: string,
   nextPassword: string,
+  rewrap: (nextPassword: string) => Promise<void>,
 ): Promise<void> {
   await reauthenticate(user, currentPassword);
+  await rewrap(nextPassword);
   await updatePassword(user, nextPassword);
 }
 

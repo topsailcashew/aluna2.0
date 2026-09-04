@@ -7,12 +7,14 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { changePassword, deleteAccount } from "@/lib/firebase/account";
+import { useVault } from "@/lib/crypto/vault";
 import { authErrorMessage, useAuth } from "@/lib/firebase/auth-context";
 import type { User } from "firebase/auth";
 
 const CONFIRM_WORD = "delete";
 
 export function PasswordSection({ user }: { user: User }) {
+  const { rewrap } = useVault();
   const [open, setOpen] = useState(false);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
@@ -37,8 +39,8 @@ export function PasswordSection({ user }: { user: User }) {
 
     setBusy(true);
     try {
-      await changePassword(user, current, next);
-      toast.success("Password changed");
+      await changePassword(user, current, next, rewrap);
+      toast.success("Password changed — your entries are still readable");
       reset();
       setOpen(false);
     } catch (error) {
@@ -63,7 +65,7 @@ export function PasswordSection({ user }: { user: User }) {
             Change password
           </span>
           <span className="block text-xs text-ink-muted">
-            You will be asked for your current one
+            Re-seals your encryption key — entries stay readable
           </span>
         </span>
       </button>

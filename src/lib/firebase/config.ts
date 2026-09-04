@@ -1,6 +1,11 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -42,6 +47,16 @@ export function getFirebaseAuth(): Auth {
 }
 
 export function getDb(): Firestore {
-  if (!dbInstance) dbInstance = getFirestore(ensureApp());
+  if (!dbInstance) {
+    // An IndexedDB-backed cache means a check-in written with no connection is
+    // held locally and sent when one returns — which is what lets the error
+    // copy promise the entry is kept on this device. The multi-tab manager
+    // keeps two open tabs from fighting over the same cache.
+    dbInstance = initializeFirestore(ensureApp(), {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
+  }
   return dbInstance;
 }

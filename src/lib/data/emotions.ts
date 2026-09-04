@@ -222,3 +222,24 @@ export function labelOf(emotionId: string): string {
 export function colorOf(primaryId: string): string {
   return PRIMARY_BY_ID.get(primaryId as PrimaryEmotionId)?.color ?? "#94A3B8";
 }
+
+/** Distinct primary families represented in a list of level-3 emotion ids. */
+export function primaryIdsFrom(emotionIds: string[]): PrimaryEmotionId[] {
+  const seen = new Set<PrimaryEmotionId>();
+  for (const id of emotionIds) {
+    const primary = id.split(".")[0] as PrimaryEmotionId;
+    if (PRIMARY_BY_ID.has(primary)) seen.add(primary);
+  }
+  return [...seen];
+}
+
+/** Distinct sub-categories represented in a list of level-3 emotion ids. */
+export function subIdsFrom(emotionIds: string[]): string[] {
+  const seen = new Set<string>();
+  for (const id of emotionIds) {
+    const [primary, subId] = id.split(".");
+    const key = `${primary}.${subId}`;
+    if (SUB_BY_ID.has(key)) seen.add(key);
+  }
+  return [...seen];
+}

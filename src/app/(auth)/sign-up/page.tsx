@@ -8,16 +8,23 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
 import { AuthShell } from "@/components/layout/auth-shell";
+import { RecoveryPhrase } from "@/components/crypto/recovery-phrase";
 import { SetupNotice } from "@/components/layout/setup-notice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { createEnvelope, generatePhrase } from "@/lib/crypto/keys";
+import { useVault } from "@/lib/crypto/vault";
+import { saveEnvelope } from "@/lib/firebase/envelope";
 import { authErrorMessage, useAuth } from "@/lib/firebase/auth-context";
 import { signUpSchema, type SignUpValues } from "@/lib/schemas";
 
 export default function SignUpPage() {
   const { signUp, configured } = useAuth();
+  const { adopt } = useVault();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
+  /** Set once the account exists and its key is in memory. */
+  const [phrase, setPhrase] = useState<string | null>(null);
 
   const {
     register,
@@ -38,19 +45,39 @@ export default function SignUpPage() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitting(true);
     try {
-      await signUp(values.displayName, values.email, values.password);
-      toast.success("Welcome to Aluna");
-      router.replace("/dashboard");
+      const user = await signUp(values.displayName, values.email, values.password);
+
+      // Generate and store the key envelope before anything can be written,
+      // so an account can never exist with entries it has no key for.
+      const nextPhrase = generatePhrase();
+      const { envelope, dataKey } = await createEnvelope(
+        values.password,
+        nextPhrase,
+      );
+      await saveEnvelope(user.uid, envelope);
+      adopt(dataKey, envelope);
+
+      setPhrase(nextPhrase);
     } catch (error) {
       toast.error(authErrorMessage(error));
+    } finally {
       setSubmitting(false);
     }
   });
 
+  if (phrase) {
+    return (
+      <RecoveryPhrase
+        phrase={phrase}
+        onConfirmed={() => router.replace("/dashboard")}
+      />
+    );
+  }
+
   return (
     <AuthShell
       title="Create your space"
-      subtitle="Everything you log stays private to your account — this is a notebook, not a feed."
+      subtitle="Your entries are encrypted on your device before they leave it. Nobody else can read them — including us."
       footer={
         <>
           Already have an account?{" "}
@@ -84,6 +111,7 @@ export default function SignUpPage() {
           type="password"
           autoComplete="new-password"
           placeholder="At least 8 characters"
+          hint="This also unlocks your entries, so pick something you will remember."
           error={errors.password?.message}
           {...register("password")}
         />

@@ -8,9 +8,15 @@ service cloud.firestore {
     /* ---------------------------------------------------------------- */
 
     match /users/{userId} {
-      // The profile document: display name, avatar, preferences.
+      // The profile document: display name, avatar, preferences, key envelope.
       allow read: if isOwner(userId);
-      allow write: if isOwner(userId) && isValidProfile(request.resource.data);
+      allow create, update: if isOwner(userId)
+                            && isValidProfile(request.resource.data);
+      // Deletion is listed separately on purpose. `allow write` also covers
+      // deletes, and on a delete `request.resource` is null — so validating it
+      // rejected every deletion, leaving the profile and its key envelope
+      // behind after someone had deleted their account.
+      allow delete: if isOwner(userId);
 
       match /entries/{entryId} {
         allow read, delete: if isOwner(userId);
@@ -83,11 +89,15 @@ service cloud.firestore {
               'angry', 'disgusted', 'sad'];
     }
 
+    // The key envelope lives here too. On its own it is two ciphertexts and
+    // two salts: useless without the password or the recovery phrase, neither
+    // of which ever reaches the server.
     function isValidProfile(data) {
       return data.keys().hasOnly([
                'displayName', 'avatarUrl', 'avatarColor',
-               'shareToCommunity', 'updatedAt'
+               'shareToCommunity', 'keyEnvelope', 'updatedAt'
              ])
+             && (!('keyEnvelope' in data) || isValidEnvelope(data.keyEnvelope))
              && (!('displayName' in data)
                  || (data.displayName is string && data.displayName.size() <= 60))
              // An avatar is a resized data URL held inline; the cap keeps the
@@ -100,30 +110,39 @@ service cloud.firestore {
                  || data.shareToCommunity is bool);
     }
 
-    // Shape check for a new entry. The numeric limits mirror constants in
-    // src/lib/schemas.ts (MAX_SENSATIONS, MAX_NOTE_LENGTH) and the taxonomy in
-    // src/lib/data — change one and change the other, or the client will
-    // permit a save the server then rejects.
-    //
-    // Note: rules cannot iterate a list, so the per-sensation `note` length is
-    // enforced by the client (Zod + maxLength) rather than here. The overall
-    // document size limit is Firestore's own 1 MiB.
-    function isValidEntry(data) {
-      return data.keys().hasOnly([
-               'sensations', 'emotions', 'primaryEmotions', 'subCategories',
-               'thoughtPatterns', 'thoughtNote', 'createdAt'
+    function isValidEnvelope(envelope) {
+      return envelope.keys().hasOnly([
+               'v', 'passwordSalt', 'passwordWrapped',
+               'phraseSalt', 'phraseWrapped', 'verifier'
              ])
-             && data.emotions is list
-             && data.emotions.size() > 0
-             && data.emotions.size() <= 82
-             && data.sensations is list
-             && data.sensations.size() <= 60
-             && data.primaryEmotions is list
-             && data.subCategories is list
-             && data.thoughtPatterns is list
-             && data.thoughtPatterns.size() <= 8
-             && data.thoughtNote is string
-             && data.thoughtNote.size() <= 200
+             && envelope.v == 1
+             && envelope.passwordWrapped is string
+             && envelope.phraseWrapped is string
+             && envelope.passwordWrapped.size() <= 4000
+             && envelope.phraseWrapped.size() <= 4000;
+    }
+
+    // Shape check for a new entry.
+    //
+    // Entry content is now end-to-end encrypted, and this is what that costs:
+    // `payload` is an opaque ciphertext, so the rules can no longer check that
+    // emotions are non-empty, that a note is under 200 characters, or that
+    // sensations are within their cap. Those limits are enforced by Zod in
+    // src/lib/schemas.ts and nowhere else — a determined client can now write
+    // a malformed entry, and only that client can read it back.
+    //
+    // What still holds server-side: ownership, append-only writes, an exact
+    // field list, and a size ceiling that keeps a runaway payload from filling
+    // the document. `createdAt` stays in the clear because Firestore has to
+    // order and paginate on it; a timestamp alone reveals only that the app
+    // was opened.
+    function isValidEntry(data) {
+      return data.keys().hasOnly(['v', 'payload', 'createdAt'])
+             && data.v == 1
+             && data.payload is string
+             && data.payload.size() > 0
+             // Generous next to a realistic entry, far below Firestore's 1 MiB.
+             && data.payload.size() <= 200000
              // Forces serverTimestamp(): a client-chosen createdAt is refused.
              && data.createdAt == request.time;
     }

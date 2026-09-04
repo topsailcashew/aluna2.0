@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowRight, Check, Flame } from "lucide-react";
 
-import { PRIMARY_BY_ID, type PrimaryEmotionId } from "@/lib/data/emotions";
+import { primaryIdsFrom, PRIMARY_BY_ID } from "@/lib/data/emotions";
 import type { CheckInEntry } from "@/lib/types";
 import { relativeTime } from "@/lib/utils";
 
@@ -20,9 +20,7 @@ interface HeroCardProps {
  */
 export function HeroCard({ entries, streak, checkedInToday }: HeroCardProps) {
   const latest = entries[0];
-  const primary = latest?.primaryEmotions[0]
-    ? PRIMARY_BY_ID.get(latest.primaryEmotions[0] as PrimaryEmotionId)
-    : undefined;
+  const primary = latest ? PRIMARY_BY_ID.get(primaryIdsFrom(latest.emotions)[0]) : undefined;
 
   const accent = checkedInToday && primary ? primary.color : undefined;
 
