@@ -1,0 +1,213 @@
+@import "tailwindcss";
+
+/*
+ * Tailwind v4 resolves `dark:` against prefers-color-scheme by default. Aluna
+ * lets people override the OS setting, and next-themes records that choice as
+ * a class on <html> — so the variant has to follow the class instead, or the
+ * utilities disagree with the CSS variables below (which are class-scoped).
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ------------------------------------------------------------------ */
+/* Design tokens                                                       */
+/* ------------------------------------------------------------------ */
+
+@theme {
+  --font-sans: var(--font-plus-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  /* Aluna's deep teal — buttons, active nav, headings on light surfaces. */
+  --color-deep-50: #eef6f7;
+  --color-deep-100: #d3e6ea;
+  --color-deep-200: #a8ccd4;
+  --color-deep-300: #71a9b5;
+  --color-deep-400: #418696;
+  --color-deep-500: #266d7e;
+  --color-deep-600: #1a5666;
+  --color-deep-700: #164452;
+  --color-deep-800: #133843;
+  --color-deep-900: #102e37;
+
+  /* Emotion families (kept in sync with src/lib/data/emotions.ts). */
+  --color-happy: #ef8a43;
+  --color-sad: #e890b0;
+  --color-disgusted: #9377c4;
+  --color-angry: #2e7b9e;
+  --color-fearful: #22867c;
+  --color-surprised: #e5b93c;
+  --color-bad: #7f8a93;
+
+  --radius-4xl: 2rem;
+  --radius-5xl: 2.5rem;
+}
+
+/* Semantic surfaces, swapped wholesale between themes. */
+:root {
+  --canvas: #eef3f0;
+  --canvas-accent: #f6efe6;
+  --surface: #ffffff;
+  --surface-muted: #f4f7f6;
+  --surface-sunken: #eaf0ef;
+  --border: #e2eae8;
+  --border-strong: #cfdcd9;
+  --ink: #12262c;
+  --ink-muted: #5b7278;
+  --ink-subtle: #8ba0a5;
+  --shadow-card: 0 1px 2px rgb(16 46 55 / 0.04), 0 8px 24px -12px rgb(16 46 55 / 0.14);
+  --shadow-lift: 0 2px 4px rgb(16 46 55 / 0.05), 0 18px 40px -18px rgb(16 46 55 / 0.24);
+  color-scheme: light;
+}
+
+.dark {
+  --canvas: #0c1a1f;
+  --canvas-accent: #14232a;
+  --surface: #142329;
+  --surface-muted: #1a2c33;
+  --surface-sunken: #101e23;
+  --border: #22383f;
+  --border-strong: #2e474f;
+  --ink: #e9f2f2;
+  --ink-muted: #9fb5ba;
+  --ink-subtle: #6f8990;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -12px rgb(0 0 0 / 0.6);
+  --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 18px 40px -18px rgb(0 0 0 / 0.7);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-canvas-accent: var(--canvas-accent);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-subtle: var(--ink-subtle);
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    min-height: 100dvh;
+  }
+
+  /* The soft mint-to-cream wash behind every screen. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(80% 55% at 8% 0%, color-mix(in oklab, var(--color-fearful) 14%, transparent), transparent 62%),
+      radial-gradient(70% 50% at 100% 8%, color-mix(in oklab, var(--color-happy) 12%, transparent), transparent 60%),
+      linear-gradient(170deg, var(--canvas) 0%, var(--canvas-accent) 100%);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-deep-400);
+    outline-offset: 2px;
+    border-radius: 0.5rem;
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-deep-400) 26%, transparent);
+  }
+}
+
+@layer utilities {
+  .card {
+    background-color: var(--surface);
+    border-radius: var(--radius-4xl);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border);
+  }
+
+  /* Hides scrollbars on the horizontal chip rails without losing scroll. */
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* No fill-mode: if the animation never runs, the step still renders at its
+     resting state rather than stranding at opacity 0. */
+  @keyframes step-enter {
+    from {
+      opacity: 0;
+      transform: translateX(1.25rem);
+    }
+  }
+  .step-enter {
+    animation: step-enter 260ms ease-out;
+  }
+
+  /* Emotion-tinted surfaces. Mixing against --surface and --ink rather than
+     hard-coding pastels means one rule reads correctly in both themes: a soft
+     wash on white, a deep tint on the dark canvas. Set --tone per element. */
+  .tone-surface {
+    background-color: color-mix(in oklab, var(--tone) 22%, var(--surface));
+    color: color-mix(in oklab, var(--tone) 68%, var(--ink));
+  }
+
+  .tone-strong {
+    color: color-mix(in oklab, var(--tone) 82%, var(--ink));
+  }
+
+  /* Ring reveal on the emotion wheel. Like .step-enter it carries no
+     fill-mode, so a ring that never animates still renders at rest. */
+  @keyframes ring-enter {
+    from {
+      opacity: 0;
+      transform: scale(0.92);
+    }
+  }
+  .ring-enter {
+    animation: ring-enter 280ms cubic-bezier(0.22, 1, 0.36, 1);
+    transform-box: view-box;
+    transform-origin: 200px 200px;
+  }
+
+  .snap-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+
+/* Recharts leaves a focus ring on its wrapper; we drive focus ourselves. */
+.recharts-wrapper:focus,
+.recharts-surface:focus {
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

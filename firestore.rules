@@ -1,0 +1,180 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ---------------------------------------------------------------- */
+    /* Private: everything a person logs about themselves                */
+    /* ---------------------------------------------------------------- */
+
+    match /users/{userId} {
+      // The profile document: display name, avatar, preferences.
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId) && isValidProfile(request.resource.data);
+
+      match /entries/{entryId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidEntry(request.resource.data);
+        // Entries are a record of a moment; written once, never edited.
+        allow update: if false;
+      }
+
+      // Private marker showing this person already added to a day's pulse.
+      match /contributions/{day} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Shared: the community tab                                         */
+    /* ---------------------------------------------------------------- */
+
+    // One document per day holding a tally per emotion family. Anyone signed
+    // in may read it and may add exactly one to exactly one family. The rules
+    // cannot tell whether this person already counted today — a sibling write
+    // in the same batch is invisible here — so once-a-day is enforced by the
+    // client against the private marker above. Inflating a mood tally harms
+    // nobody, and the alternative is a Cloud Function.
+    match /communityPulse/{day} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isSingleTally(request.resource.data);
+      allow update: if isSignedIn() && isSingleIncrement();
+      allow delete: if false;
+    }
+
+    match /reflections/{reflectionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.authorId == request.auth.uid
+                    && isValidReflection(request.resource.data);
+      // Only the author can remove a post.
+      allow delete: if isSignedIn()
+                    && resource.data.authorId == request.auth.uid;
+      // The only permitted edit is the resonance tally moving by one.
+      allow update: if isSignedIn() && isResonanceChange();
+
+      // One acknowledgement per person, keyed by uid so it cannot be doubled.
+      match /resonances/{userId} {
+        allow read: if isOwner(userId);
+        allow create, delete: if isOwner(userId);
+        allow update: if false;
+      }
+    }
+
+    // Anything not matched above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    /* ---------------------------------------------------------------- */
+    /* Helpers                                                           */
+    /* ---------------------------------------------------------------- */
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function families() {
+      return ['happy', 'surprised', 'bad', 'fearful',
+              'angry', 'disgusted', 'sad'];
+    }
+
+    function isValidProfile(data) {
+      return data.keys().hasOnly([
+               'displayName', 'avatarUrl', 'avatarColor',
+               'shareToCommunity', 'updatedAt'
+             ])
+             && (!('displayName' in data)
+                 || (data.displayName is string && data.displayName.size() <= 60))
+             // An avatar is a resized data URL held inline; the cap keeps the
+             // document far below Firestore's 1 MiB limit.
+             && (!('avatarUrl' in data)
+                 || (data.avatarUrl is string && data.avatarUrl.size() <= 200000))
+             && (!('avatarColor' in data)
+                 || (data.avatarColor is string && data.avatarColor.size() <= 32))
+             && (!('shareToCommunity' in data)
+                 || data.shareToCommunity is bool);
+    }
+
+    // Shape check for a new entry. The numeric limits mirror constants in
+    // src/lib/schemas.ts (MAX_SENSATIONS, MAX_NOTE_LENGTH) and the taxonomy in
+    // src/lib/data — change one and change the other, or the client will
+    // permit a save the server then rejects.
+    //
+    // Note: rules cannot iterate a list, so the per-sensation `note` length is
+    // enforced by the client (Zod + maxLength) rather than here. The overall
+    // document size limit is Firestore's own 1 MiB.
+    function isValidEntry(data) {
+      return data.keys().hasOnly([
+               'sensations', 'emotions', 'primaryEmotions', 'subCategories',
+               'thoughtPatterns', 'thoughtNote', 'createdAt'
+             ])
+             && data.emotions is list
+             && data.emotions.size() > 0
+             && data.emotions.size() <= 82
+             && data.sensations is list
+             && data.sensations.size() <= 60
+             && data.primaryEmotions is list
+             && data.subCategories is list
+             && data.thoughtPatterns is list
+             && data.thoughtPatterns.size() <= 8
+             && data.thoughtNote is string
+             && data.thoughtNote.size() <= 200
+             // Forces serverTimestamp(): a client-chosen createdAt is refused.
+             && data.createdAt == request.time;
+    }
+
+    function isValidReflection(data) {
+      return data.keys().hasOnly([
+               'text', 'primary', 'authorId', 'resonateCount', 'createdAt'
+             ])
+             && data.text is string
+             && data.text.size() > 0
+             && data.text.size() <= 240
+             && (data.primary == null || data.primary in families())
+             && data.resonateCount == 0
+             && data.createdAt == request.time;
+    }
+
+    // A brand-new day document may set a single family to exactly 1.
+    function isSingleTally(data) {
+      return data.keys().size() == 1
+             && data.keys()[0] in families()
+             && data[data.keys()[0]] == 1;
+    }
+
+    // An existing day document may have exactly one family move up by one,
+    // and nothing else may change.
+    function isSingleIncrement() {
+      return request.resource.data.diff(resource.data)
+               .affectedKeys().size() == 1
+             && request.resource.data.diff(resource.data)
+                  .affectedKeys().hasOnly(families())
+             && changedTallyIsPlusOne();
+    }
+
+    function changedTallyIsPlusOne() {
+      return request.resource.data[
+               request.resource.data.diff(resource.data).affectedKeys().toList()[0]
+             ] ==
+             (resource.data.get(
+               request.resource.data.diff(resource.data).affectedKeys().toList()[0], 0
+             ) + 1);
+    }
+
+    // Reflections are immutable apart from their acknowledgement tally, which
+    // may only ever move by one in either direction.
+    function isResonanceChange() {
+      return request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(['resonateCount'])
+             && request.resource.data.resonateCount is int
+             && request.resource.data.resonateCount >= 0
+             && (request.resource.data.resonateCount == resource.data.resonateCount + 1
+                 || request.resource.data.resonateCount == resource.data.resonateCount - 1);
+    }
+  }
+}
