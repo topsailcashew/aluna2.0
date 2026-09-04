@@ -70,6 +70,20 @@ export interface LoggedSensation extends SensationValues {
   id: string;
 }
 
+const tagScale = z.enum(["low", "mid", "high"]);
+
+export const contextTagsSchema = z.object({
+  sleep: tagScale.optional(),
+  energy: tagScale.optional(),
+  stress: tagScale.optional(),
+  activities: z.array(z.string()).max(20),
+});
+
+export const journalSchema = z.record(
+  z.string(),
+  z.string().max(2000, "That is longer than a journal entry needs to be"),
+);
+
 export const checkInSchema = z.object({
   sensations: z
     .array(sensationSchema)
@@ -82,6 +96,8 @@ export const checkInSchema = z.object({
   thoughtNote: z
     .string()
     .max(MAX_NOTE_LENGTH, `Keep notes under ${MAX_NOTE_LENGTH} characters`),
+  tags: contextTagsSchema,
+  journal: journalSchema,
 });
 
 export type CheckInValues = z.infer<typeof checkInSchema>;

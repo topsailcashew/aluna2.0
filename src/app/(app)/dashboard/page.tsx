@@ -1,21 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { TriangleAlert, Users, Wind } from "lucide-react";
+import { CalendarDays, LineChart, Wind } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { EmotionDistribution } from "@/components/dashboard/emotion-distribution";
 import { HeroCard } from "@/components/dashboard/hero-card";
 import { RecentEntries } from "@/components/dashboard/recent-entries";
-import { SensationTimeline } from "@/components/dashboard/sensation-timeline";
 import { StatCards } from "@/components/dashboard/stat-cards";
+import { NudgeCard } from "@/components/dashboard/nudge-card";
 import { WeekStrip } from "@/components/dashboard/week-strip";
+import { ErrorState, OfflineNote } from "@/components/ui/error-state";
+import { useOnline } from "@/hooks/use-online";
+import { useProfile } from "@/hooks/use-profile";
 import { ChartSkeleton, StatCardSkeleton } from "@/components/ui/skeleton";
 import { currentStreak, hasCheckedInToday, weekStrip } from "@/lib/analytics";
 import { useEntries } from "@/hooks/use-entries";
 
 export default function DashboardPage() {
   const { entries, loading, error } = useEntries();
+  const { profile } = useProfile();
+  const online = useOnline();
 
   const streak = currentStreak(entries);
   const checkedInToday = hasCheckedInToday(entries);
@@ -31,11 +35,9 @@ export default function DashboardPage() {
         }
       />
 
-      {error && (
-        <div className="flex items-start gap-3 rounded-2xl border border-[#f0c2bd] bg-[#fdecea] p-4 text-[#8d3b32] dark:border-[#6b3630] dark:bg-[#3a201d] dark:text-[#f3b8b1]">
-          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
-          <p className="text-xs leading-relaxed font-semibold">{error}</p>
-        </div>
+      {!online && <OfflineNote />}
+      {error && online && (
+        <ErrorState message={error} onRetry={() => window.location.reload()} />
       )}
 
       {loading ? (
@@ -50,6 +52,9 @@ export default function DashboardPage() {
             streak={streak}
             checkedInToday={checkedInToday}
           />
+          {!checkedInToday && profile.reminderHour !== null && (
+            <NudgeCard hour={profile.reminderHour} />
+          )}
           <WeekStrip days={days} />
           <StatCards entries={entries} />
         </>
@@ -63,29 +68,12 @@ export default function DashboardPage() {
           detail="Guided, with sound"
         />
         <ShortcutCard
-          href="/community"
-          icon={Users}
-          title="Community"
-          detail="How others are doing"
+          href="/insights"
+          icon={LineChart}
+          title="Insights"
+          detail="What stands out"
         />
       </div>
-
-      <section aria-label="Wellness charts" className="space-y-4">
-        <h2 className="px-1 text-base font-extrabold tracking-tight text-ink">
-          Wellness charts
-        </h2>
-        {loading ? (
-          <>
-            <ChartSkeleton />
-            <ChartSkeleton height={144} />
-          </>
-        ) : (
-          <>
-            <SensationTimeline entries={entries} />
-            <EmotionDistribution entries={entries} />
-          </>
-        )}
-      </section>
 
       <section aria-label="Recent entries">
         {loading ? (
@@ -94,6 +82,23 @@ export default function DashboardPage() {
           <RecentEntries entries={entries} />
         )}
       </section>
+
+      <Link
+        href="/history"
+        className="card flex items-center gap-3 p-4 transition-colors hover:border-line-strong"
+      >
+        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
+          <CalendarDays className="size-4.5" aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-extrabold text-ink">
+            All your check-ins
+          </span>
+          <span className="block text-[11px] text-ink-muted">
+            Browse by day, filter by feeling
+          </span>
+        </span>
+      </Link>
     </div>
   );
 }

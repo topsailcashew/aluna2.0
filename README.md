@@ -54,17 +54,22 @@ src/
     (app)/             dashboard, check-in, breathe, profile — behind AuthGate
   components/
     breathe/           the full-screen guided session
+    crypto/            recovery phrase, unlock screen
     check-in/          the three steps, the emotion wheel, the body map
     community/         the daily pulse and the reflection wall
     dashboard/         hero, week strip, tiles, charts, recent entries
     layout/            nav, header, theme, auth gate
+    insights/          the twenty-week pixel grid
     profile/           avatar editor, theme choice, password and danger zones
     ui/                button, card, input, textarea, slider, skeleton…
   hooks/               live Firestore views, hydration and media-query helpers
   lib/
     data/              emotions (82), body parts (29), thought patterns (8),
                        breath patterns, weekly prompts
-    firebase/          config, auth, entries, profile, account, community
+    crypto/            AES-GCM cipher, key envelope, wordlist, vault context
+    firebase/          config, auth, entries, profile, account, community,
+                       key envelope
+    insights.ts        observations, with sample floors
     analytics.ts       dashboard aggregation
     breath-audio.ts    synthesised session tones (Web Audio)
     image.ts           client-side avatar resizing
@@ -129,6 +134,26 @@ Structural state — which rings exist, which slices are dimmed, which step is o
 screen — is driven by CSS transitions and animations that carry no fill-mode.
 If an animation never runs, the interface still renders at rest. Framer Motion
 is used only where a missing animation costs nothing (the entry/exit of pills).
+
+### Screens
+
+Four tabs — Home, Check-in, Breathe, Profile — with Profile acting as a hub
+out to Insights, History, Community, Settings and Help. Analytics behind a
+"Profile" label is a compromise; the alternative was six tabs on a 375px
+screen.
+
+Check-in has two paths. Quick is the wheel alone and saves in a tap; Full adds
+the body scan, context tags, thought patterns and a guided journal. Both write
+an identical entry — the quick one simply leaves the other fields empty, which
+is also what skipping them does.
+
+### Insights
+
+Observations are held to a floor: ten entries overall, four on each side of any
+comparison, and a fifteen-point gap before a difference is worth mentioning.
+A mood app that announces a pattern from four check-ins is laundering noise
+into advice, on a subject where people take advice seriously. Each observation
+shows what it rests on.
 
 ### Community
 

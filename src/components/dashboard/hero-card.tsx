@@ -26,7 +26,7 @@ export function HeroCard({ entries, streak, checkedInToday }: HeroCardProps) {
 
   return (
     <Link
-      href="/check-in"
+      href="/check-in?mode=quick"
       className="group relative block overflow-hidden rounded-4xl p-5 text-white shadow-lift transition-transform active:scale-[0.99]"
       style={{
         background: accent

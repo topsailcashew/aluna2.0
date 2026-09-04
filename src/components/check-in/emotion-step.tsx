@@ -23,7 +23,7 @@ export function EmotionStep({ emotions, onChange }: EmotionStepProps) {
     <div className="space-y-6">
       <header className="space-y-1">
         <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
-          Step 2 · Emotion map
+          Emotion map
         </p>
         <h2 className="text-2xl font-extrabold tracking-tight text-ink">
           Name what you are feeling

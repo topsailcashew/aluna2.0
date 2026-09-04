@@ -10,6 +10,10 @@ export interface UserProfile {
   avatarColor: string;
   /** Opt-in: contributes an anonymous mood signal to the community pulse. */
   shareToCommunity: boolean;
+  /** Hour of day (0-23) the in-app nudge starts appearing. */
+  reminderHour: number | null;
+  /** Set once the welcome flow has been seen, so it never repeats. */
+  onboardedAt: string | null;
 }
 
 export const DEFAULT_PROFILE: UserProfile = {
@@ -17,6 +21,8 @@ export const DEFAULT_PROFILE: UserProfile = {
   avatarUrl: "",
   avatarColor: "#164452",
   shareToCommunity: false,
+  reminderHour: 20,
+  onboardedAt: null,
 };
 
 const profileRef = (uid: string) => doc(getDb(), "users", uid);
@@ -36,6 +42,8 @@ export function subscribeToProfile(
         avatarColor: data?.avatarColor ?? DEFAULT_PROFILE.avatarColor,
         shareToCommunity:
           data?.shareToCommunity ?? DEFAULT_PROFILE.shareToCommunity,
+        reminderHour: data?.reminderHour ?? DEFAULT_PROFILE.reminderHour,
+        onboardedAt: data?.onboardedAt ?? DEFAULT_PROFILE.onboardedAt,
       });
     },
     (error) => onError(error),

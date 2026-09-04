@@ -44,6 +44,8 @@ export async function createEntry(
     emotions: values.emotions,
     thoughtPatterns: values.thoughtPatterns,
     thoughtNote: values.thoughtNote?.trim() ?? "",
+    tags: values.tags,
+    journal: values.journal,
   };
 
   const doc = await addDoc(entriesRef(uid), {
@@ -59,6 +61,8 @@ const EMPTY_CONTENT: EntryContent = {
   emotions: [],
   thoughtPatterns: [],
   thoughtNote: "",
+  tags: { activities: [] },
+  journal: {},
 };
 
 /**
@@ -96,6 +100,7 @@ export function subscribeToEntries(
 
           return {
             id: entry.id,
+            ...EMPTY_CONTENT,
             ...content,
             undecryptable,
             // A pending server timestamp reads as null until the write lands;

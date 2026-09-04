@@ -4,6 +4,9 @@ import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+import { usePathname } from "next/navigation";
+
+import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { useVault } from "@/lib/crypto/vault";
 import {
@@ -19,11 +22,23 @@ import { SetupNotice } from "@/components/layout/setup-notice";
 export function AuthGate({ children }: { children: ReactNode }) {
   const { user, loading, configured } = useAuth();
   const { status } = useVault();
+  const { profile, loading: profileLoading } = useProfile();
+  const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
     if (configured && !loading && !user) router.replace("/sign-in");
   }, [configured, loading, user, router]);
+
+  const needsWelcome =
+    status === "unlocked" &&
+    !profileLoading &&
+    profile.onboardedAt === null &&
+    pathname !== "/welcome";
+
+  useEffect(() => {
+    if (needsWelcome) router.replace("/welcome");
+  }, [needsWelcome, router]);
 
   if (!configured) return <SetupNotice />;
 

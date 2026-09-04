@@ -1,39 +1,71 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  CalendarCheck,
-  Check,
-  Download,
+  CalendarDays,
+  ChevronRight,
+  HelpCircle,
+  LineChart,
   LogOut,
-  Palette,
   Pencil,
-  ShieldCheck,
+  Settings,
   Users,
 } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
-import {
-  DangerSection,
-  PasswordSection,
-} from "@/components/profile/security-section";
 import { AvatarEditor } from "@/components/profile/avatar-editor";
-import { ThemeChoice } from "@/components/profile/theme-choice";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardSubtitle, CardTitle } from "@/components/ui/card";
+import { Card, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useEntries } from "@/hooks/use-entries";
 import { useProfile } from "@/hooks/use-profile";
-import {
-  buildExport,
-  changeDisplayName,
-  downloadExport,
-} from "@/lib/firebase/account";
+import { changeDisplayName } from "@/lib/firebase/account";
 import { authErrorMessage, useAuth } from "@/lib/firebase/auth-context";
 import { saveProfile } from "@/lib/firebase/user-profile";
 import { relativeTime } from "@/lib/utils";
+
+/**
+ * A hub rather than a settings dump: the account at the top, then one row out
+ * to each area. Everything that used to be stacked here as cards now lives on
+ * its own route, which keeps this page short enough to take in at a glance.
+ */
+const LINKS: { href: string; label: string; detail: string; Icon: LucideIcon }[] =
+  [
+    {
+      href: "/insights",
+      label: "Insights",
+      detail: "Trends, distribution and what stands out",
+      Icon: LineChart,
+    },
+    {
+      href: "/history",
+      label: "History",
+      detail: "Every check-in, by day",
+      Icon: CalendarDays,
+    },
+    {
+      href: "/community",
+      label: "Community",
+      detail: "The anonymous pulse and reflections",
+      Icon: Users,
+    },
+    {
+      href: "/settings",
+      label: "Settings",
+      detail: "Appearance, nudges, export, password",
+      Icon: Settings,
+    },
+    {
+      href: "/help",
+      label: "Help & safety",
+      detail: "How it works, FAQ, crisis resources",
+      Icon: HelpCircle,
+    },
+  ];
 
 export default function ProfilePage() {
   const { user, signOut } = useAuth();
@@ -47,16 +79,7 @@ export default function ProfilePage() {
   const [signingOut, setSigningOut] = useState(false);
 
   if (!user) return null;
-
   const name = profile.displayName || user.displayName || "";
-
-  const persist = async (changes: Parameters<typeof saveProfile>[1]) => {
-    try {
-      await saveProfile(user.uid, changes);
-    } catch (error) {
-      toast.error(authErrorMessage(error));
-    }
-  };
 
   const saveName = async () => {
     const trimmed = nameDraft.trim();
@@ -75,21 +98,6 @@ export default function ProfilePage() {
       setSavingName(false);
     }
   };
-
-  const handleSignOut = async () => {
-    setSigningOut(true);
-    try {
-      await signOut();
-      router.replace("/sign-in");
-    } catch (error) {
-      toast.error(authErrorMessage(error));
-      setSigningOut(false);
-    }
-  };
-
-  const memberSince = user.metadata.creationTime
-    ? new Date(user.metadata.creationTime)
-    : null;
 
   return (
     <div className="space-y-5">
@@ -123,7 +131,6 @@ export default function ProfilePage() {
                 />
                 <div className="flex gap-2">
                   <Button size="sm" onClick={saveName} loading={savingName}>
-                    <Check className="size-3.5" aria-hidden />
                     Save
                   </Button>
                   <Button
@@ -141,15 +148,13 @@ export default function ProfilePage() {
                   {name || "Your space"}
                 </p>
                 <p className="truncate text-xs text-ink-muted">{user.email}</p>
-                {memberSince && (
-                  <p className="mt-0.5 text-[11px] text-ink-subtle">
-                    With Aluna since{" "}
-                    {memberSince.toLocaleDateString(undefined, {
-                      month: "long",
-                      year: "numeric",
-                    })}
-                  </p>
-                )}
+                <p className="mt-0.5 text-[11px] text-ink-subtle">
+                  {loading
+                    ? "Counting your entries…"
+                    : entries.length === 0
+                      ? "No check-ins yet"
+                      : `${entries.length} check-in${entries.length === 1 ? "" : "s"} · last ${relativeTime(entries[0].createdAt)}`}
+                </p>
               </>
             )}
           </div>
@@ -176,152 +181,59 @@ export default function ProfilePage() {
           name={name || user.email || "A"}
           avatarUrl={profile.avatarUrl}
           avatarColor={profile.avatarColor}
-          onChange={(changes) => void persist(changes)}
+          onChange={(changes) => {
+            void saveProfile(user.uid, changes).catch((error) =>
+              toast.error(authErrorMessage(error)),
+            );
+          }}
         />
       </Card>
 
-      <Card className="space-y-3">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
-            <Palette className="size-4.5" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1">
-            <CardTitle>Appearance</CardTitle>
-            <CardSubtitle>Light, dark, or whatever your device says</CardSubtitle>
-          </div>
-        </div>
-        <ThemeChoice />
-      </Card>
-
-      <Card className="space-y-3">
-        <div className="flex items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
-            <Users className="size-4.5" aria-hidden />
-          </span>
-          <div className="min-w-0 flex-1">
-            <CardTitle>Community pulse</CardTitle>
-            <CardSubtitle>
-              Add today&apos;s feeling to the anonymous count
-            </CardSubtitle>
-          </div>
-          <Switch
-            checked={profile.shareToCommunity}
-            onChange={(value) => void persist({ shareToCommunity: value })}
-            label="Contribute to the community pulse"
-          />
-        </div>
-        <p className="text-xs leading-relaxed text-ink-subtle">
-          Only the emotion family is counted — never the specific feelings, the
-          sensations, the notes, or your name. You can switch this off at any
-          time.
-        </p>
-      </Card>
-
-      <Card className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
-          <CalendarCheck className="size-4.5" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1">
-          <CardTitle>Your record</CardTitle>
-          <CardSubtitle>
-            {loading
-              ? "Counting your entries…"
-              : entries.length === 0
-                ? "No check-ins yet"
-                : `${entries.length} check-in${entries.length === 1 ? "" : "s"}${
-                    entries[0]
-                      ? ` · last one ${relativeTime(entries[0].createdAt)}`
-                      : ""
-                  }`}
-          </CardSubtitle>
-        </div>
-      </Card>
-
-      <Card>
-        <button
-          type="button"
-          onClick={() => {
-            downloadExport(buildExport(user, entries));
-            toast.success("Export downloaded");
-          }}
-          disabled={loading || entries.length === 0}
-          className="flex w-full items-center gap-3 text-left disabled:opacity-50"
-        >
-          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
-            <Download className="size-4.5" aria-hidden />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-base font-bold text-ink">
-              Export your data
-            </span>
-            <span className="block text-xs text-ink-muted">
-              Every check-in as a JSON file, on your device
-            </span>
-          </span>
-        </button>
-      </Card>
-
-      <Card>
-        <PasswordSection user={user} />
-      </Card>
-
-      <Card className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
-          <ShieldCheck className="size-4.5" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1 space-y-1">
-          <CardTitle>Privacy</CardTitle>
-          <p className="text-xs leading-relaxed text-ink-muted">
-            Every entry is stored under your own user id and readable only by
-            you. Nothing you log is shared, published or used to train anything.
-          </p>
-        </div>
-      </Card>
+      <nav aria-label="Profile sections">
+        <Card className="divide-y divide-line p-0">
+          {LINKS.map(({ href, label, detail, Icon }) => (
+            <Link
+              key={href}
+              href={href}
+              className="flex items-center gap-3 p-4 transition-colors hover:bg-surface-muted"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
+                <Icon className="size-4.5" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-base font-bold text-ink">
+                  {label}
+                </span>
+                <span className="block text-xs text-ink-muted">{detail}</span>
+              </span>
+              <ChevronRight
+                className="size-4 shrink-0 text-ink-subtle"
+                aria-hidden
+              />
+            </Link>
+          ))}
+        </Card>
+      </nav>
 
       <Button
         variant="secondary"
         size="lg"
         fullWidth
         loading={signingOut}
-        onClick={handleSignOut}
+        onClick={async () => {
+          setSigningOut(true);
+          try {
+            await signOut();
+            router.replace("/sign-in");
+          } catch (error) {
+            toast.error(authErrorMessage(error));
+            setSigningOut(false);
+          }
+        }}
       >
         <LogOut className="size-4" aria-hidden />
         Log out
       </Button>
-
-      <Card>
-        <DangerSection user={user} />
-      </Card>
     </div>
-  );
-}
-
-function Switch({
-  checked,
-  onChange,
-  label,
-}: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  label: string;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      aria-label={label}
-      onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
-        checked ? "bg-deep-600" : "bg-surface-sunken"
-      }`}
-    >
-      <span
-        aria-hidden
-        className={`absolute top-1 size-5 rounded-full bg-white shadow transition-[left] duration-200 ${
-          checked ? "left-6" : "left-1"
-        }`}
-      />
-    </button>
   );
 }

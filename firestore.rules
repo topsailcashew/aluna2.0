@@ -95,7 +95,8 @@ service cloud.firestore {
     function isValidProfile(data) {
       return data.keys().hasOnly([
                'displayName', 'avatarUrl', 'avatarColor',
-               'shareToCommunity', 'keyEnvelope', 'updatedAt'
+               'shareToCommunity', 'reminderHour', 'onboardedAt',
+               'keyEnvelope', 'updatedAt'
              ])
              && (!('keyEnvelope' in data) || isValidEnvelope(data.keyEnvelope))
              && (!('displayName' in data)
@@ -107,7 +108,16 @@ service cloud.firestore {
              && (!('avatarColor' in data)
                  || (data.avatarColor is string && data.avatarColor.size() <= 32))
              && (!('shareToCommunity' in data)
-                 || data.shareToCommunity is bool);
+                 || data.shareToCommunity is bool)
+             && (!('reminderHour' in data)
+                 || data.reminderHour == null
+                 || (data.reminderHour is int
+                     && data.reminderHour >= 0
+                     && data.reminderHour <= 23))
+             && (!('onboardedAt' in data)
+                 || data.onboardedAt == null
+                 || (data.onboardedAt is string
+                     && data.onboardedAt.size() <= 40));
     }
 
     function isValidEnvelope(envelope) {
