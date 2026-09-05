@@ -126,6 +126,18 @@ export default function SignUpPage() {
         <Button type="submit" size="lg" fullWidth loading={submitting}>
           Create account
         </Button>
+
+        <p className="text-center text-[11px] leading-relaxed text-ink-subtle">
+          By creating an account you agree to the{" "}
+          <Link href="/terms" className="font-semibold underline underline-offset-2">
+            terms
+          </Link>{" "}
+          and the{" "}
+          <Link href="/privacy" className="font-semibold underline underline-offset-2">
+            privacy policy
+          </Link>
+          .
+        </p>
       </form>
     </AuthShell>
   );

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, LifeBuoy, Mail } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, LifeBuoy, Mail, ScrollText, ShieldCheck } from "lucide-react";
 
 import { BackHeader } from "@/components/layout/back-header";
 import { Card, CardSubtitle, CardTitle } from "@/components/ui/card";
@@ -142,6 +143,34 @@ export default function HelpPage() {
           </p>
         </Card>
       </section>
+
+      <Card className="p-0">
+        <Link
+          href="/privacy"
+          className="flex items-center gap-3 border-b border-line p-4"
+        >
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
+            <ShieldCheck className="size-4.5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-ink">Privacy</span>
+            <span className="block text-xs text-ink-muted">
+              What is stored, what cannot be read, how to remove it
+            </span>
+          </span>
+        </Link>
+        <Link href="/terms" className="flex items-center gap-3 p-4">
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
+            <ScrollText className="size-4.5" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-bold text-ink">Terms</span>
+            <span className="block text-xs text-ink-muted">
+              What Aluna is, and what it is not
+            </span>
+          </span>
+        </Link>
+      </Card>
 
       <Card className="flex items-start gap-3">
         <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">

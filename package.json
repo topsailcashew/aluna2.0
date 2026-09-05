@@ -36,5 +36,8 @@
     "tailwindcss": "^4",
     "typescript": "^5"
   },
-  "description": "A calm daily check-in for body, emotions and mind."
+  "description": "A calm daily check-in for body, emotions and mind.",
+  "engines": {
+    "node": ">=20 <23"
+  }
 }
