@@ -1,3 +1,4 @@
+import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import { Toaster } from "sonner";
@@ -34,13 +35,18 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Set per request by src/middleware.ts. next-themes injects a script before
+  // paint to avoid a flash of the wrong theme, and it needs the nonce to run
+  // under the policy.
+  const nonce = (await headers()).get("x-nonce") ?? undefined;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${jakarta.variable} antialiased`}>
-        <ThemeProvider>
+        <ThemeProvider nonce={nonce}>
           <AuthProvider>
             <VaultProvider>{children}</VaultProvider>
             <Toaster

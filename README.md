@@ -135,6 +135,29 @@ screen — is driven by CSS transitions and animations that carry no fill-mode.
 If an animation never runs, the interface still renders at rest. Framer Motion
 is used only where a missing animation costs nothing (the entry/exit of pills).
 
+### Security headers
+
+`src/middleware.ts` sets a Content-Security-Policy with a per-request nonce;
+`next.config.ts` carries the static headers (frame denial, nosniff, referrer
+and permissions policy, COOP).
+
+The nonce matters more here than it would elsewhere. Entries are end-to-end
+encrypted, so the decryption key sits in JavaScript memory while the app is
+open — an injected script would read the key and every decrypted entry with
+it, not merely a session token. `script-src 'unsafe-inline'` would leave that
+door open, so Next's bootstrap and next-themes' pre-paint script are nonced
+and `strict-dynamic` lets them pull their own chunks.
+
+The cost is that every route renders on demand rather than statically: reading
+the nonce header opts the layout into dynamic rendering. Each page is an
+auth-gated client shell with nothing worth caching, so this is cheap here — it
+would not be on a content site.
+
+`connect-src` names only the three Google endpoints the app actually uses, so
+even a successful injection has nowhere to send what it reads. Styles keep
+`unsafe-inline` — Tailwind and styled-jsx both need it, and injected CSS cannot
+exfiltrate a CryptoKey.
+
 ### Screens
 
 Four tabs — Home, Check-in, Breathe, Profile — with Profile acting as a hub
