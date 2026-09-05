@@ -1,5 +1,7 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
+
+import { startAppCheck } from "@/lib/firebase/app-check";
 import {
   initializeFirestore,
   persistentLocalCache,
@@ -37,6 +39,9 @@ function ensureApp(): FirebaseApp {
   }
   if (!app) {
     app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+    // Must run before the first Auth or Firestore call, so tokens are attached
+    // from the very first request rather than the second.
+    startAppCheck(app);
   }
   return app;
 }

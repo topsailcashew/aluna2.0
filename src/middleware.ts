@@ -28,7 +28,18 @@ export function middleware(request: NextRequest) {
     `img-src 'self' data: blob:`,
     `font-src 'self' data:`,
     // Only the two Google endpoints this app actually talks to.
-    `connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com`,
+    [
+      `connect-src 'self'`,
+      `https://identitytoolkit.googleapis.com`,
+      `https://securetoken.googleapis.com`,
+      `https://firestore.googleapis.com`,
+      // App Check, and the reCAPTCHA Enterprise it is built on.
+      `https://content-firebaseappcheck.googleapis.com`,
+      `https://www.google.com`,
+      `https://www.gstatic.com`,
+    ].join(" "),
+    // reCAPTCHA draws its challenge in an iframe.
+    `frame-src 'self' https://www.google.com https://recaptcha.google.com`,
     `frame-ancestors 'none'`,
     `form-action 'self'`,
     `base-uri 'self'`,
