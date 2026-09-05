@@ -82,8 +82,26 @@ debug tokens.
 ### 2. Restrict the API key
 
 Google Cloud Console → APIs & Services → Credentials → the browser key →
-Application restrictions → **Websites** → add `aluna-2-0.vercel.app`. The key
-is public by design, but this stops it being used from anywhere else.
+Application restrictions → **Websites**. The key is public by design, but this
+stops it being used from anywhere else.
+
+**Add all of these, not just production.** A referrer restriction refuses
+every origin it does not name, including your own machine:
+
+```
+aluna-2-0.vercel.app/*
+*.vercel.app/*          # preview deployments
+localhost/*             # local development
+```
+
+Anything left off breaks silently with
+`auth/requests-from-referer-<origin>-are-blocked`. The app surfaces that as a
+readable message rather than the raw Firebase string.
+
+Note that `scripts/verify-encryption.mjs` runs under Node, which sends no
+referrer, so it cannot run against a restricted key at all. It detects this and
+says so. To use it, either lift the restriction temporarily or keep a second
+unrestricted key for testing.
 
 ### 3. Deployment protection
 

@@ -64,6 +64,12 @@ export function authErrorMessage(error: unknown): string {
     case "auth/requires-recent-login":
       return "Please sign in again before making this change.";
     default:
+      // The API key is restricted by HTTP referrer, and this origin is not on
+      // the list. Firebase reports it as a long unreadable string, so say what
+      // it actually is — it is a configuration problem, not a user error.
+      if (code.includes("requests-from-referer")) {
+        return "This address is not authorised to reach Firebase. Add it to the API key's website restrictions in Google Cloud Console.";
+      }
       return error instanceof Error
         ? error.message
         : "Something went wrong. Please try again.";

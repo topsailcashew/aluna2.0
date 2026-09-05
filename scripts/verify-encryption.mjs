@@ -55,7 +55,22 @@ const db = getFirestore(app);
 let failures = 0;
 const step = async (name, fn) => {
   try { await fn(); console.log("  PASS  " + name); }
-  catch (e) { console.log("  FAIL  " + name + "\n        " + (e?.message ?? e)); failures++; }
+  catch (e) {
+    const message = e?.message ?? String(e);
+    // Node sends no Referer, so an API key restricted by website will refuse
+    // every call here. That is the restriction working, not a broken app —
+    // worth saying once, clearly, rather than failing eight times over.
+    if (message.includes("requests-from-referer")) {
+      console.log("\n  This key is restricted by HTTP referrer, and Node sends none.");
+      console.log("  The restriction is working; this script simply cannot run against it.");
+      console.log("  To verify encryption, either:");
+      console.log("    - temporarily remove the website restriction, run this, and restore it, or");
+      console.log("    - create a second unrestricted key for testing and put it in .env.local.\n");
+      process.exit(2);
+    }
+    console.log("  FAIL  " + name + "\n        " + message);
+    failures++;
+  }
 };
 const assert = (cond, msg) => { if (!cond) throw new Error(msg); };
 
