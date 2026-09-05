@@ -1,23 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarDays, LineChart, Wind } from "lucide-react";
+import { Lightbulb, Wind } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/app-header";
-import { HeroCard } from "@/components/dashboard/hero-card";
-import { RecentEntries } from "@/components/dashboard/recent-entries";
-import { StatCards } from "@/components/dashboard/stat-cards";
+import { Aura } from "@/components/dashboard/aura";
+import { JourneyTimeline } from "@/components/dashboard/journey-timeline";
 import { NudgeCard } from "@/components/dashboard/nudge-card";
-import { ReflectionCard } from "@/components/dashboard/reflection-card";
-import { WeekStrip } from "@/components/dashboard/week-strip";
+import { OrbCta } from "@/components/dashboard/orb-cta";
+import { PatternCard } from "@/components/dashboard/pattern-card";
+import { WeekWave } from "@/components/dashboard/week-wave";
+import { ChartSkeleton } from "@/components/ui/skeleton";
 import { ErrorState, OfflineNote } from "@/components/ui/error-state";
+import { currentStreak, hasCheckedInToday, weekStrip } from "@/lib/analytics";
+import { dayKey } from "@/lib/data/prompts";
+import {
+  PRIMARY_BY_ID,
+  primaryIdsFrom,
+  type PrimaryEmotionId,
+} from "@/lib/data/emotions";
+import { reflectionFor } from "@/lib/data/reflections";
+import { useEntries } from "@/hooks/use-entries";
 import { useOnline } from "@/hooks/use-online";
 import { useProfile } from "@/hooks/use-profile";
-import { ChartSkeleton, StatCardSkeleton } from "@/components/ui/skeleton";
-import { currentStreak, hasCheckedInToday, weekStrip } from "@/lib/analytics";
-import { primaryIdsFrom, type PrimaryEmotionId } from "@/lib/data/emotions";
-import { dayKey } from "@/lib/data/prompts";
-import { useEntries } from "@/hooks/use-entries";
 
 export default function DashboardPage() {
   const { entries, loading, error } = useEntries();
@@ -28,15 +34,21 @@ export default function DashboardPage() {
   const checkedInToday = hasCheckedInToday(entries);
   const days = weekStrip(entries);
 
-  // The family behind today's most recent check-in, if there is one.
+  // The family behind today's most recent check-in. It tints the whole screen,
+  // so the app looks like whatever the day has been rather than always the same.
   const todaysFamily: PrimaryEmotionId | null = (() => {
     const today = dayKey();
     const entry = entries.find((item) => dayKey(item.createdAt) === today);
     return entry ? (primaryIdsFrom(entry.emotions)[0] ?? null) : null;
   })();
 
+  const family = todaysFamily ? PRIMARY_BY_ID.get(todaysFamily) : undefined;
+  const reflection = reflectionFor(todaysFamily, dayKey());
+
   return (
     <div className="space-y-5">
+      <Aura accent={family?.color ?? null} />
+
       <AppHeader
         subtitle={
           checkedInToday
@@ -52,22 +64,39 @@ export default function DashboardPage() {
 
       {loading ? (
         <>
+          <ChartSkeleton height={176} />
           <ChartSkeleton height={92} />
-          <StatCardSkeleton />
         </>
       ) : (
         <>
-          <HeroCard
-            entries={entries}
-            streak={streak}
+          <OrbCta
+            accent={family?.color ?? null}
             checkedInToday={checkedInToday}
+            familyLabel={family?.label ?? null}
+            streak={streak}
           />
-          <ReflectionCard family={todaysFamily} />
+
+          <div className="space-y-1.5 px-2 pt-1 pb-1 text-center">
+            <p className="text-sm leading-relaxed font-medium text-balance text-ink">
+              {reflection.text}
+            </p>
+            {reflection.action && (
+              <Link
+                href={reflection.action.href}
+                className="inline-block text-xs font-bold transition-opacity hover:opacity-75"
+                style={{ color: family?.color ?? "var(--color-deep-600)" }}
+              >
+                {reflection.action.label} →
+              </Link>
+            )}
+          </div>
+
           {!checkedInToday && profile.reminderHour !== null && (
             <NudgeCard hour={profile.reminderHour} />
           )}
-          <WeekStrip days={days} />
-          <StatCards entries={entries} />
+
+          <WeekWave days={days} entries={entries} />
+          <PatternCard entries={entries} />
         </>
       )}
 
@@ -80,36 +109,17 @@ export default function DashboardPage() {
         />
         <ShortcutCard
           href="/insights"
-          icon={LineChart}
+          icon={Lightbulb}
           title="Insights"
           detail="What stands out"
         />
       </div>
 
-      <section aria-label="Recent entries">
-        {loading ? (
-          <ChartSkeleton height={200} />
-        ) : (
-          <RecentEntries entries={entries} />
-        )}
-      </section>
-
-      <Link
-        href="/history"
-        className="card flex items-center gap-3 p-4 transition-colors hover:border-line-strong"
-      >
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
-          <CalendarDays className="size-4.5" aria-hidden />
-        </span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-extrabold text-ink">
-            All your check-ins
-          </span>
-          <span className="block text-[11px] text-ink-muted">
-            Browse by day, filter by feeling
-          </span>
-        </span>
-      </Link>
+      {loading ? (
+        <ChartSkeleton height={200} />
+      ) : (
+        <JourneyTimeline entries={entries} />
+      )}
     </div>
   );
 }
@@ -121,14 +131,14 @@ function ShortcutCard({
   detail,
 }: {
   href: string;
-  icon: typeof Wind;
+  icon: LucideIcon;
   title: string;
   detail: string;
 }) {
   return (
     <Link
       href={href}
-      className="card flex flex-col gap-2 p-4 transition-colors hover:border-line-strong"
+      className="card flex flex-col gap-2 bg-surface/70 p-4 backdrop-blur transition-colors hover:border-line-strong"
     >
       <span className="grid size-9 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
         <Icon className="size-4.5" aria-hidden />

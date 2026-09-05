@@ -216,7 +216,14 @@ export function subOf(emotionId: string): SubEmotion | undefined {
 }
 
 export function labelOf(emotionId: string): string {
-  return EMOTION_LABEL_BY_ID.get(emotionId) ?? emotionId;
+  const known = EMOTION_LABEL_BY_ID.get(emotionId);
+  if (known) return known;
+
+  // The wheel has been reshaped before and may be again. Rather than printing
+  // "sad.vulnerable.exposed" at someone, recover the word from the last
+  // segment — it is still the thing they chose.
+  const leaf = emotionId.split(".").pop() ?? emotionId;
+  return leaf.charAt(0).toUpperCase() + leaf.slice(1).replace(/-/g, " ");
 }
 
 export function colorOf(primaryId: string): string {

@@ -36,7 +36,7 @@ export function AppHeader({
         </p>
         <p className="truncate text-xs text-ink-muted">{subtitle}</p>
       </div>
-      <span className="relative grid size-10 shrink-0 place-items-center rounded-full bg-surface text-ink-muted shadow-card">
+      <span className="relative grid size-10 shrink-0 place-items-center rounded-full bg-surface/70 text-ink-muted shadow-card backdrop-blur">
         <Bell className="size-4" aria-hidden />
         {hasUnread && (
           <span
