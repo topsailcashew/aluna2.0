@@ -200,11 +200,6 @@ export const TOTAL_EMOTIONS = EMOTIONS.reduce(
   0,
 );
 
-export const TOTAL_SUB_CATEGORIES = EMOTIONS.reduce(
-  (total, primary) => total + primary.subCategories.length,
-  0,
-);
-
 /** `"happy.peaceful.loving"` -> the owning primary family. */
 export function primaryOf(emotionId: string): PrimaryEmotion | undefined {
   return PRIMARY_BY_ID.get(emotionId.split(".")[0] as PrimaryEmotionId);
@@ -224,10 +219,6 @@ export function labelOf(emotionId: string): string {
   // segment — it is still the thing they chose.
   const leaf = emotionId.split(".").pop() ?? emotionId;
   return leaf.charAt(0).toUpperCase() + leaf.slice(1).replace(/-/g, " ");
-}
-
-export function colorOf(primaryId: string): string {
-  return PRIMARY_BY_ID.get(primaryId as PrimaryEmotionId)?.color ?? "#94A3B8";
 }
 
 /** Distinct primary families represented in a list of level-3 emotion ids. */

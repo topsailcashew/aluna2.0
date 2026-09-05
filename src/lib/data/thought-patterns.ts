@@ -55,7 +55,3 @@ export const THOUGHT_PATTERNS: ThoughtPattern[] = [
 export const THOUGHT_PATTERN_BY_ID = new Map(
   THOUGHT_PATTERNS.map((p) => [p.id, p]),
 );
-
-export function thoughtPatternLabel(id: string): string {
-  return THOUGHT_PATTERN_BY_ID.get(id)?.label ?? id;
-}

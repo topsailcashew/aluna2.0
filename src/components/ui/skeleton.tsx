@@ -18,15 +18,6 @@ export function Skeleton({
   );
 }
 
-export function StatCardSkeleton() {
-  return (
-    <div className="card space-y-3 p-5">
-      <Skeleton className="h-3 w-24" />
-      <Skeleton className="h-7 w-32" />
-    </div>
-  );
-}
-
 export function ChartSkeleton({ height = 176 }: { height?: number }) {
   return (
     <div className="card space-y-4 p-5">

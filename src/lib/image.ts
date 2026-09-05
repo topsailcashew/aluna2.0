@@ -66,14 +66,3 @@ export async function prepareAvatar(file: File): Promise<string> {
   }
 }
 
-/** Accent colours offered when someone would rather not upload a photo. */
-export const AVATAR_COLORS = [
-  "#164452",
-  "#22867c",
-  "#2e7b9e",
-  "#9377c4",
-  "#e890b0",
-  "#ef8a43",
-  "#e5b93c",
-  "#6b7f52",
-] as const;

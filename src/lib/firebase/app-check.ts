@@ -22,8 +22,6 @@ const DEBUG_TOKEN = process.env.NEXT_PUBLIC_APPCHECK_DEBUG_TOKEN;
 
 let started = false;
 
-export const isAppCheckConfigured = Boolean(SITE_KEY);
-
 export function startAppCheck(app: FirebaseApp): void {
   if (started || !SITE_KEY || typeof window === "undefined") return;
   started = true;

@@ -80,10 +80,6 @@ export const BREATH_PATTERNS: BreathPattern[] = [
   },
 ];
 
-export const BREATH_PATTERN_BY_ID = new Map(
-  BREATH_PATTERNS.map((pattern) => [pattern.id, pattern]),
-);
-
 export function cycleSeconds(pattern: BreathPattern): number {
   return pattern.phases.reduce((total, phase) => total + phase.seconds, 0);
 }

@@ -1,80 +1,170 @@
 # Aluna
 
-A calm, cloud-backed daily check-in for your body, your emotions and your mind.
-Log where sensation lives, name what you feel on a three-level emotion wheel,
-notice what your thoughts have been doing — then watch the patterns surface on a
-personal dashboard.
+A private daily check-in for your body, your emotions and your mind.
 
-Nothing is shared. Every entry belongs to the account that wrote it.
+Most mood trackers ask how you feel on a scale of one to five. Aluna asks
+*where* you feel it, *which* feeling it actually is out of eighty-two, and what
+your mind has been doing — then shows you what that adds up to over weeks.
 
-## Getting started
+Every entry is encrypted on your device before it is sent. Nobody else can read
+your check-ins, including whoever runs the app.
+
+**Live at [aluna-2-0.vercel.app](https://aluna-2-0.vercel.app)**
+
+---
+
+## What you can do with it
+
+### Check in, quickly or properly
+
+The quick path is the emotion wheel and a few optional context taps — under
+fifteen seconds once you know your way around. The full path adds a body scan,
+thought patterns and a guided reflection.
+
+Both write the same kind of entry. Skipping a step costs you nothing.
+
+### Name the feeling precisely
+
+Aluna uses the Feelings Wheel: seven families, forty-one sub-categories,
+**eighty-two specific emotions**. You start broad — happy, sad, angry — and
+narrow until it fits.
+
+Precision is the point. "Uneasy" and "dreading" ask for different things, and
+noticing which one it is tends to be more useful than any advice about it. You
+can pick as many as are true, including contradictory ones, across different
+families.
+
+### Log where the body feels it
+
+Twenty-nine locations on a figure you can tap, each with an intensity from zero
+to ten and room for a note. Bodies often notice before minds do.
+
+### Get something back afterwards
+
+Saving a check-in offers a short piece of writing about what you logged — what
+that feeling tends to be like, and three ordinary things that can help. Written
+in advance and reviewed, not generated (see *Why the guidance is hard-coded*).
+
+Pleasant feelings get noticing rather than fixing. Nothing here treats a good
+day as a problem to manage.
+
+### Breathe, then come back to the room
+
+Four guided patterns — box breathing, 4·7·8, coherent, extended exhale — with
+sound synthesised in the browser rather than shipped as audio files. A session
+ends with an optional grounding exercise: four senses, three things each.
+
+### Keep a journal
+
+A blank page, separate from check-ins, encrypted the same way. No prompts, no
+structure, no length anyone expects of you.
+
+### See what it adds up to
+
+- **Insights** — mood trend, emotion distribution, a twenty-week grid, and
+  plain-language observations about what your feelings travel with.
+- **History** — a month calendar coloured by dominant feeling; tap any day.
+- **Home** — the week as a wave, and a screen that takes the colour of whatever
+  today has been.
+
+Observations only appear once there is enough to draw on: ten entries overall,
+four either side of any comparison, and a real gap between them. A pattern
+found in four check-ins is noise, and saying it confidently would be worse than
+saying nothing.
+
+### Or don't, for a while
+
+There is no streak to protect and no notification that can interrupt you. The
+calendar shows the gaps honestly rather than smoothing them over. Missing a
+week costs you nothing.
+
+---
+
+## Privacy
+
+This is the part that shapes everything else.
+
+Entry content — emotions, sensations, notes, journal — is encrypted in your
+browser with a key derived from your password. **The key never reaches the
+server.** A random data key does the encrypting and is stored only as two
+wrapped copies: one sealed by your password, one by a twelve-word recovery
+phrase shown once at signup.
+
+Consequences worth knowing before you rely on it:
+
+- Changing your password re-wraps the key. Instant, however many entries exist.
+- Losing both the password and the phrase makes every entry permanently
+  unreadable, by anyone. There is no reset and no backup.
+- The key lives in memory only, so a reload asks you to unlock again.
+
+What is *not* encrypted, because the app cannot work otherwise: your email,
+display name, avatar, timestamps, preferences, and anything you deliberately
+post to Community. The [privacy page](https://aluna-2-0.vercel.app/privacy)
+says so plainly rather than implying everything is covered.
+
+See [SECURITY.md](SECURITY.md) for the threat model and the deployment
+checklist.
+
+---
+
+## Running it
 
 ```bash
 npm install
-```
-
-Create a Firebase project, then copy the config into your environment:
-
-```bash
 cp .env.local.example .env.local
 ```
 
 Fill in the six `NEXT_PUBLIC_FIREBASE_*` values from **Project settings → Your
-apps → Web app**. In the Firebase console also:
+apps → Web app**. Then in the Firebase console:
 
 1. Enable **Authentication → Sign-in method → Email/Password**.
 2. Create a **Firestore** database.
-3. Deploy the security rules: `firebase deploy --only firestore:rules`.
-
-Then:
+3. Deploy the rules: `firebase deploy --only firestore:rules`.
 
 ```bash
 npm run dev
 ```
 
-Running without those keys is safe — the app shows a setup screen naming exactly
-what is missing rather than failing with an SDK error.
+Running without those keys is safe — the app shows a setup screen naming what
+is missing rather than failing with an SDK error.
 
-## Scripts
+If you restrict the API key by website, add `localhost/*` alongside your
+production domain or local development stops working. SECURITY.md covers this.
 
 | Command | Does |
 | --- | --- |
-| `npm run dev` | Development server on http://localhost:3000 |
+| `npm run dev` | Development server |
 | `npm run build` | Production build |
-| `npm start` | Serve the production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | `tsc --noEmit` |
+| `node --experimental-strip-types scripts/verify-encryption.mjs` | Proves encryption end to end against the live project, on a throwaway account it then deletes |
 
-## How it fits together
+---
+
+## How it is put together
 
 ```
 src/
   app/
     (auth)/            sign-in, sign-up
-    (app)/             dashboard, check-in, breathe, profile — behind AuthGate
+    (onboarding)/      welcome — auth gate, no app chrome
+    (legal)/           privacy, terms — deliberately outside the auth gate
+    (app)/             everything behind AuthGate
   components/
-    breathe/           the full-screen guided session
+    breathe/           full-screen session, grounding
+    check-in/          the steps, the emotion wheel, the body map
+    community/         daily pulse, reflection wall
     crypto/            recovery phrase, unlock screen
-    check-in/          the three steps, the emotion wheel, the body map
-    community/         the daily pulse and the reflection wall
-    dashboard/         hero, week strip, tiles, charts, recent entries
-    layout/            nav, header, theme, auth gate
-    insights/          the twenty-week pixel grid
-    profile/           avatar editor, theme choice, password and danger zones
-    ui/                button, card, input, textarea, slider, skeleton…
-  hooks/               live Firestore views, hydration and media-query helpers
+    dashboard/         aura, orb, week wave, timeline
+    insights/          twenty-week grid
+    layout/ profile/ ui/
+  hooks/               live Firestore views, hydration, media queries
   lib/
-    data/              emotions (82), body parts (29), thought patterns (8),
-                       breath patterns, weekly prompts
-    crypto/            AES-GCM cipher, key envelope, wordlist, vault context
-    firebase/          config, auth, entries, profile, account, community,
-                       key envelope
+    crypto/            AES-GCM cipher, key envelope, wordlist, vault
+    data/              emotions, body parts, breath patterns, guidance
+    firebase/          config, auth, entries, journal, profile, community
+    analytics.ts       aggregation
     insights.ts        observations, with sample floors
-    analytics.ts       dashboard aggregation
-    breath-audio.ts    synthesised session tones (Web Audio)
-    image.ts           client-side avatar resizing
-    schemas.ts         Zod validation
-    wheel-geometry.ts  polar maths for the wheel
 ```
 
 ### Data model
@@ -82,129 +172,72 @@ src/
 One document per check-in at `users/{uid}/entries/{entryId}`:
 
 ```ts
-{
-  sensations: { bodyPart: string; intensity: number; note: string }[],
-  emotions: string[],        // "happy.peaceful.calm"
-  primaryEmotions: string[], // denormalised for cheap aggregation
-  subCategories: string[],   // ditto
-  thoughtPatterns: string[],
-  thoughtNote: string,
-  createdAt: Timestamp,
-}
+{ v: 1, payload: "<ciphertext>", createdAt: Timestamp }
 ```
 
-Emotion ids are dotted paths, so a level-3 id carries its whole lineage. The
-dashboard reads `primaryEmotions` and `subCategories` directly instead of
-re-parsing every id on render.
+`createdAt` stays in the clear because Firestore has to order and paginate on
+it; a timestamp alone reveals only that the app was opened. Everything else —
+including which emotion family it was — lives inside `payload`.
 
-Entries are append-only: `firestore.rules` allows create and delete for the
-owner, and refuses updates. A check-in records a moment; editing it later would
-make the history a worse record, not a better one.
+That has a cost worth naming: security rules cannot validate the shape of
+something they cannot read. Ownership, append-only writes, an exact field list
+and a size ceiling still hold server-side. The content limits moved to Zod on
+the client, and `firestore.rules` says so rather than pretending otherwise.
+
+Entries are append-only — a check-in records a moment, and editing it later
+would make the history a worse record. Journal notes *are* editable, because a
+piece of writing is a draft until its author says otherwise.
 
 ### The emotion wheel
 
-Follows the Feelings Wheel: seven primary families → 41 sub-categories (4–9
-each) → 82 specific emotions (2 each), all in `src/lib/data/emotions.ts`. The
-wheel renders straight from that structure, so adding a feeling means editing
-the array and nothing else.
+Seven families → forty-one sub-categories → eighty-two emotions, all in
+`src/lib/data/emotions.ts`. The wheel renders straight from that array, so
+adding a feeling means editing data and nothing else.
 
-A handful of labels repeat across branches — "Overwhelmed" sits under both Bad
-and Fearful, "Embarrassed" under both Sad and Disgusted. That comes from the
-source wheel and is deliberate; ids carry the whole lineage
-(`sad.hurt.embarrassed`), so they stay distinct even where the words do not.
+A few labels repeat across branches — "Overwhelmed" under both Bad and Fearful.
+That comes from the source wheel. Ids carry the whole lineage
+(`sad.hurt.embarrassed`), so they stay distinct where the words do not.
 
-Rings appear as you drill in rather than showing every label at once. Level-3
-selection is multi-select and spans families — pick two contradictory feelings
-if that is the truth — with counts rolling back up through the rings.
+### Why the guidance is hard-coded
 
-Label direction flips for slices on the left of the wheel so text never reads
-upside down. The bound is inclusive at 270°, because a sub-category with
-exactly two emotions centres a slice there.
+An API would mean sending the user's emotional state to a third party on every
+check-in — exactly the data the encryption exists to keep off other people's
+servers. The promise on the signup screen would become a lie the moment it
+shipped.
+
+Fixed text also means every sentence can be reviewed before someone in a bad
+state reads it, which matters where a confidently wrong line lands hard.
 
 ### Session audio
 
-Synthesised at runtime rather than shipped as files. Each phase turn plays a
-singing-bowl strike — a low fundamental plus two quiet inharmonic partials,
-low-passed, slow attack, long tail — over a swell of pink noise whose gain and
-filter track the breath itself. An open fifth drones underneath. Nothing is
-brighter than 2.2 kHz and nothing changes pitch mid-note; an earlier version
-glided between pitches and read as cartoonish.
+Synthesised at runtime. Each phase turn is a singing-bowl strike — a low
+fundamental plus two quiet inharmonic partials, low-passed, slow attack — over
+a swell of pink noise whose gain and filter follow the breath. An earlier
+version glided between pitches and read as cartoonish.
 
-Structural state — which rings exist, which slices are dimmed, which step is on
-screen — is driven by CSS transitions and animations that carry no fill-mode.
-If an animation never runs, the interface still renders at rest. Framer Motion
-is used only where a missing animation costs nothing (the entry/exit of pills).
+### Animation
 
-### Security headers
-
-`src/middleware.ts` sets a Content-Security-Policy with a per-request nonce;
-`next.config.ts` carries the static headers (frame denial, nosniff, referrer
-and permissions policy, COOP).
-
-The nonce matters more here than it would elsewhere. Entries are end-to-end
-encrypted, so the decryption key sits in JavaScript memory while the app is
-open — an injected script would read the key and every decrypted entry with
-it, not merely a session token. `script-src 'unsafe-inline'` would leave that
-door open, so Next's bootstrap and next-themes' pre-paint script are nonced
-and `strict-dynamic` lets them pull their own chunks.
-
-The cost is that every route renders on demand rather than statically: reading
-the nonce header opts the layout into dynamic rendering. Each page is an
-auth-gated client shell with nothing worth caching, so this is cheap here — it
-would not be on a content site.
-
-`connect-src` names only the three Google endpoints the app actually uses, so
-even a successful injection has nowhere to send what it reads. Styles keep
-`unsafe-inline` — Tailwind and styled-jsx both need it, and injected CSS cannot
-exfiltrate a CryptoKey.
-
-### Screens
-
-Four tabs — Home, Check-in, Breathe, Profile — with Profile acting as a hub
-out to Insights, History, Community, Settings and Help. Analytics behind a
-"Profile" label is a compromise; the alternative was six tabs on a 375px
-screen.
-
-Check-in has two paths. Quick is the wheel alone and saves in a tap; Full adds
-the body scan, context tags, thought patterns and a guided journal. Both write
-an identical entry — the quick one simply leaves the other fields empty, which
-is also what skipping them does.
-
-### Insights
-
-Observations are held to a floor: ten entries overall, four on each side of any
-comparison, and a fifteen-point gap before a difference is worth mentioning.
-A mood app that announces a pattern from four check-ins is laundering noise
-into advice, on a subject where people take advice seriously. Each observation
-shows what it rests on.
-
-### Community
-
-Two things, both deliberately small. **Today's pulse** is one tally per emotion
-family per day; contributing is opt-in and sends nothing but the family name.
-**Reflections** is an anonymous wall with a weekly prompt — no names, no
-avatars, no replies, and a single "resonates" acknowledgement rather than a
-score to chase. A post carries its author's id so its author can delete it;
-that id is never rendered, and the app says so on the page.
-
-Rules keep the shared documents honest: a pulse write may move exactly one
-family by exactly one, and a reflection is immutable apart from its
-acknowledgement tally. What rules cannot do is prove someone has not already
-counted today — a sibling write in the same batch is invisible to them — so
-once-a-day is enforced client-side against a private marker. Inflating a mood
-tally costs nobody anything; the alternative was a Cloud Function.
+Structural state — which step is showing, which rings exist — is CSS-driven
+with no `fill-mode`, so the interface renders at rest if an animation never
+runs. Framer Motion is used only where a missing animation costs nothing.
 
 ### Theme
 
 `next-themes` writes a class on `<html>`, and `globals.css` declares
-`@custom-variant dark (&:where(.dark, .dark *))` so Tailwind's `dark:` variant
-follows that class. Without the custom variant, Tailwind v4 resolves `dark:`
-against `prefers-color-scheme`, which quietly disagrees with a person who has
-chosen Light while their OS is dark.
+`@custom-variant dark (&:where(.dark, .dark *))` so Tailwind's `dark:` follows
+that class. Without it, Tailwind v4 resolves `dark:` against
+`prefers-color-scheme`, which disagrees with anyone who has chosen Light while
+their OS is dark.
+
+---
 
 ## Stack
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Firebase Auth &
-Firestore · Recharts · Framer Motion · Zod · React Hook Form · next-themes ·
-Sonner · Web Audio API
-# aluna2.0
+Next.js 16 · React 19 · TypeScript · Tailwind v4 · Firebase Auth & Firestore ·
+Web Crypto · Web Audio · Recharts · Framer Motion · Zod · next-themes · Sonner
+
+## Not a medical service
+
+Aluna is a notebook for noticing how you feel. It does not diagnose anything
+and is not a substitute for a doctor, a therapist or a crisis line. Support
+numbers are listed under Help in the app.

@@ -83,11 +83,3 @@ export async function decryptJson<T>(
 ): Promise<T> {
   return JSON.parse(await decryptString(key, payload)) as T;
 }
-
-/** Raised when a key cannot open a payload — wrong password, or tampering. */
-export class DecryptionError extends Error {
-  constructor(message = "Could not decrypt with that key.") {
-    super(message);
-    this.name = "DecryptionError";
-  }
-}

@@ -36,5 +36,3 @@ export interface CheckInEntry extends EntryContent {
   /** True when this row's payload could not be opened with the current key. */
   undecryptable: boolean;
 }
-
-export const EMPTY_TAGS: ContextTags = { activities: [] };
