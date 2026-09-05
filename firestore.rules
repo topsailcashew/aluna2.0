@@ -25,6 +25,19 @@ service cloud.firestore {
         allow update: if false;
       }
 
+      // Free-form journal notes. Same encrypted shape as an entry, but these
+      // are editable: a check-in records what was true at a moment, a piece of
+      // writing is a draft until its author says otherwise.
+      match /journal/{noteId} {
+        allow read, delete: if isOwner(userId);
+        allow create: if isOwner(userId) && isValidNote(request.resource.data);
+        allow update: if isOwner(userId)
+                      && request.resource.data.diff(resource.data)
+                           .affectedKeys().hasOnly(['payload', 'updatedAt'])
+                      && request.resource.data.payload is string
+                      && request.resource.data.payload.size() <= 400000;
+      }
+
       // Private marker showing this person already added to a day's pulse.
       match /contributions/{day} {
         allow read, write: if isOwner(userId);
@@ -154,6 +167,17 @@ service cloud.firestore {
              // Generous next to a realistic entry, far below Firestore's 1 MiB.
              && data.payload.size() <= 200000
              // Forces serverTimestamp(): a client-chosen createdAt is refused.
+             && data.createdAt == request.time;
+    }
+
+    // Journal notes run longer than check-ins, so the ceiling is higher --
+    // still far below Firestore's 1 MiB per document.
+    function isValidNote(data) {
+      return data.keys().hasOnly(['v', 'payload', 'createdAt'])
+             && data.v == 1
+             && data.payload is string
+             && data.payload.size() > 0
+             && data.payload.size() <= 400000
              && data.createdAt == request.time;
     }
 

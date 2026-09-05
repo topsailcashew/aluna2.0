@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Pause, Play, Volume2, VolumeX, X } from "lucide-react";
 
+import { Grounding } from "@/components/breathe/grounding";
+
 import { usePrefersReducedMotion } from "@/hooks/use-prefers-reduced-motion";
 import { BreathAudio } from "@/lib/breath-audio";
 import {
@@ -63,6 +65,9 @@ export function BreathSession({
   const [paused, setPaused] = useState(false);
   const [muted, setMuted] = useState(false);
   const [done, setDone] = useState(false);
+  // Breathwork settles the body; grounding puts attention outside the head,
+  // which is the half that keeps it settled.
+  const [grounding, setGrounding] = useState(false);
 
   const audioRef = useRef<BreathAudio | null>(null);
   // Wall-clock bookkeeping: `elapsed` accumulates only while running, so
@@ -217,6 +222,9 @@ export function BreathSession({
         </button>
       </header>
 
+      {grounding ? (
+        <Grounding accent={pattern.accent} onDone={onClose} />
+      ) : (
       <div className="flex flex-1 flex-col items-center justify-center gap-8 px-6">
         <div className="relative grid h-[19rem] w-[19rem] place-items-center">
           {/* Four dots mark the corners a box pattern travels through; other
@@ -260,18 +268,28 @@ export function BreathSession({
         </div>
 
         {done ? (
-          <div className="space-y-3 text-center">
+          <div className="space-y-4 text-center">
             <p className="max-w-[30ch] text-sm leading-relaxed text-ink-muted">
               {minutes} minute{minutes === 1 ? "" : "s"} of {pattern.name.toLowerCase()}.
               Notice how the next breath arrives on its own.
             </p>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-2xl bg-deep-700 px-6 py-3 text-sm font-bold text-white"
-            >
-              Done
-            </button>
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setGrounding(true)}
+                className="rounded-2xl px-6 py-3 text-sm font-bold text-white"
+                style={{ backgroundColor: pattern.accent }}
+              >
+                Now ground yourself
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-xs font-bold text-ink-muted hover:text-ink"
+              >
+                Finish here
+              </button>
+            </div>
           </div>
         ) : (
           <p className="max-w-[32ch] text-center text-xs leading-relaxed text-ink-muted">
@@ -281,7 +299,9 @@ export function BreathSession({
         )}
       </div>
 
-      {!done && (
+      )}
+
+      {!done && !grounding && (
         <div className="flex items-center justify-center gap-3 px-6 pb-[calc(env(safe-area-inset-bottom)+2rem)]">
           <ControlButton
             onClick={togglePaused}

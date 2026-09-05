@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { useVault } from "@/lib/crypto/vault";
 import { createEntry } from "@/lib/firebase/entries";
+import { subIdsFrom } from "@/lib/data/emotions";
 import { checkInSchema, type LoggedSensation } from "@/lib/schemas";
 import type { ContextTags, JournalAnswers } from "@/lib/types";
 
@@ -137,8 +138,10 @@ function CheckInFlow() {
     setSubmitting(true);
     try {
       await createEntry(user.uid, dataKey, parsed.data);
-      toast.success("Check-in saved — thank you for noticing");
-      router.push("/dashboard");
+      // Hand the sub-categories forward so the next screen does not have to
+      // decrypt the entry it was just given.
+      const subs = subIdsFrom(parsed.data.emotions).slice(0, 2).join(",");
+      router.push(`/after?subs=${encodeURIComponent(subs)}`);
     } catch (error) {
       toast.error(
         error instanceof Error
