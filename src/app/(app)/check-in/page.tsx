@@ -29,7 +29,7 @@ import type { ContextTags, JournalAnswers } from "@/lib/types";
 type StepId = "sensations" | "emotions" | "tags" | "thoughts" | "journal";
 
 const FLOWS: Record<"quick" | "full", StepId[]> = {
-  quick: ["emotions"],
+  quick: ["emotions", "tags"],
   full: ["sensations", "emotions", "tags", "thoughts", "journal"],
 };
 
@@ -81,12 +81,15 @@ function CheckInFlow() {
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
-  /** Switching to the full flow keeps everything already entered. */
+  /**
+   * Switching to the full flow starts at step one. Anything already chosen on
+   * the wheel is kept — it is the same state — but the body scan is the point
+   * of asking for more detail, so it should not be skipped past.
+   */
   const expand = () => {
     setMode("full");
-    const emotionsAt = FLOWS.full.indexOf("emotions");
-    setIndex(emotionsAt);
-    setFurthest(emotionsAt);
+    setIndex(0);
+    setFurthest(FLOWS.full.indexOf("tags"));
   };
 
   const goNext = () => {
@@ -222,7 +225,7 @@ function CheckInFlow() {
               className="flex w-full items-center justify-center gap-2 py-1 text-sm font-bold text-deep-600 transition-colors hover:text-deep-500 dark:text-deep-300"
             >
               <ListPlus className="size-4" aria-hidden />
-              Add body, context and a reflection
+              Add the body scan and a reflection
             </button>
           )}
 

@@ -11,15 +11,13 @@ import {
   LogOut,
   Pencil,
   Settings,
-  Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { AvatarEditor } from "@/components/profile/avatar-editor";
-import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useEntries } from "@/hooks/use-entries";
 import { useProfile } from "@/hooks/use-profile";
@@ -46,12 +44,6 @@ const LINKS: { href: string; label: string; detail: string; Icon: LucideIcon }[]
       label: "History",
       detail: "Every check-in, by day",
       Icon: CalendarDays,
-    },
-    {
-      href: "/community",
-      label: "Community",
-      detail: "The anonymous pulse and reflections",
-      Icon: Users,
     },
     {
       href: "/settings",
@@ -111,14 +103,18 @@ export default function ProfilePage() {
       </header>
 
       <Card className="space-y-4">
-        <div className="flex items-center gap-4">
-          <Avatar
-            url={profile.avatarUrl}
-            color={profile.avatarColor}
-            name={name || user.email}
-            className="size-14 rounded-3xl"
-            textClassName="text-xl"
-          />
+        <AvatarEditor
+          name={name || user.email || "A"}
+          avatarUrl={profile.avatarUrl}
+          avatarColor={profile.avatarColor}
+          onChange={(changes) => {
+            void saveProfile(user.uid, changes).catch((error) =>
+              toast.error(authErrorMessage(error)),
+            );
+          }}
+        />
+
+        <div className="flex items-start gap-3 border-t border-line pt-4">
           <div className="min-w-0 flex-1">
             {editingName ? (
               <div className="space-y-2">
@@ -173,20 +169,6 @@ export default function ProfilePage() {
             </button>
           )}
         </div>
-      </Card>
-
-      <Card className="space-y-4">
-        <CardTitle>Picture</CardTitle>
-        <AvatarEditor
-          name={name || user.email || "A"}
-          avatarUrl={profile.avatarUrl}
-          avatarColor={profile.avatarColor}
-          onChange={(changes) => {
-            void saveProfile(user.uid, changes).catch((error) =>
-              toast.error(authErrorMessage(error)),
-            );
-          }}
-        />
       </Card>
 
       <nav aria-label="Profile sections">

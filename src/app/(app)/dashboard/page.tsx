@@ -8,12 +8,15 @@ import { HeroCard } from "@/components/dashboard/hero-card";
 import { RecentEntries } from "@/components/dashboard/recent-entries";
 import { StatCards } from "@/components/dashboard/stat-cards";
 import { NudgeCard } from "@/components/dashboard/nudge-card";
+import { ReflectionCard } from "@/components/dashboard/reflection-card";
 import { WeekStrip } from "@/components/dashboard/week-strip";
 import { ErrorState, OfflineNote } from "@/components/ui/error-state";
 import { useOnline } from "@/hooks/use-online";
 import { useProfile } from "@/hooks/use-profile";
 import { ChartSkeleton, StatCardSkeleton } from "@/components/ui/skeleton";
 import { currentStreak, hasCheckedInToday, weekStrip } from "@/lib/analytics";
+import { primaryIdsFrom, type PrimaryEmotionId } from "@/lib/data/emotions";
+import { dayKey } from "@/lib/data/prompts";
 import { useEntries } from "@/hooks/use-entries";
 
 export default function DashboardPage() {
@@ -24,6 +27,13 @@ export default function DashboardPage() {
   const streak = currentStreak(entries);
   const checkedInToday = hasCheckedInToday(entries);
   const days = weekStrip(entries);
+
+  // The family behind today's most recent check-in, if there is one.
+  const todaysFamily: PrimaryEmotionId | null = (() => {
+    const today = dayKey();
+    const entry = entries.find((item) => dayKey(item.createdAt) === today);
+    return entry ? (primaryIdsFrom(entry.emotions)[0] ?? null) : null;
+  })();
 
   return (
     <div className="space-y-5">
@@ -52,6 +62,7 @@ export default function DashboardPage() {
             streak={streak}
             checkedInToday={checkedInToday}
           />
+          <ReflectionCard family={todaysFamily} />
           {!checkedInToday && profile.reminderHour !== null && (
             <NudgeCard hour={profile.reminderHour} />
           )}
