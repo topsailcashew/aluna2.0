@@ -101,10 +101,7 @@ export default function ProfilePage() {
   return (
     <div className="space-y-5">
       <header className="space-y-1">
-        <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
-          Profile
-        </p>
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h1 className="text-2xl font-display text-ink">
           Your account
         </h1>
       </header>

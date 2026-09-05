@@ -26,7 +26,7 @@ export default function AppError({
   return (
     <main className="mx-auto grid min-h-dvh max-w-md place-items-center px-5">
       <div className="space-y-4 text-center">
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h1 className="text-2xl font-display text-ink">
           Something went wrong on this screen
         </h1>
         <p className="text-sm leading-relaxed text-ink-muted">

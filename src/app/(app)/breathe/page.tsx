@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Check, Play } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
+
 import { BreathSession } from "@/components/breathe/breath-session";
 import {
   BREATH_PATTERNS,
@@ -33,10 +35,7 @@ export default function BreathePage() {
   return (
     <div className="space-y-4 pb-40">
       <header className="space-y-1">
-        <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
-          Breathing tools
-        </p>
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h1 className="text-2xl font-display text-ink">
           Somewhere to put your attention
         </h1>
       </header>
@@ -115,9 +114,7 @@ export default function BreathePage() {
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/85 backdrop-blur-xl">
         <div className="mx-auto max-w-lg space-y-2.5 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-bold tracking-wide text-ink-muted uppercase">
-              How long
-            </p>
+            <p className="text-sm font-semibold text-ink">How long?</p>
             <p className="text-xs text-ink-subtle">about {breaths} breaths</p>
           </div>
 
@@ -145,18 +142,10 @@ export default function BreathePage() {
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={() => setRunning(true)}
-            className="flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 text-base font-bold text-white transition-transform active:scale-[0.99]"
-            style={{
-              backgroundColor: selected.accent,
-              boxShadow: `0 14px 30px -16px ${selected.accent}`,
-            }}
-          >
+          <Button onClick={() => setRunning(true)} size="lg" fullWidth>
             <Play className="size-5" fill="currentColor" aria-hidden />
             Begin {selected.name.toLowerCase()}
-          </button>
+          </Button>
         </div>
       </div>
 

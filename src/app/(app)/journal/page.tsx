@@ -178,7 +178,7 @@ export default function JournalPage() {
 
         <article className="space-y-3">
           <header className="space-y-1">
-            <h1 className="text-2xl font-extrabold tracking-tight text-balance text-ink">
+            <h1 className="text-2xl font-display text-balance text-ink">
               {reading.title || "Untitled"}
             </h1>
             <p className="text-xs text-ink-subtle">

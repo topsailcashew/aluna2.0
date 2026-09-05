@@ -47,12 +47,12 @@ export function OrbCta({
         />
         <span className="relative flex flex-col items-center gap-1 px-6 text-center">
           {checkedInToday && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold tracking-[0.12em] text-ink-muted uppercase">
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-muted">
               <Check className="size-3" strokeWidth={3} aria-hidden />
               Checked in
             </span>
           )}
-          <span className="text-xl leading-tight font-extrabold tracking-tight text-balance text-ink">
+          <span className="text-2xl leading-tight font-display text-balance text-ink">
             {checkedInToday && familyLabel ? `Mostly ${familyLabel.toLowerCase()}` : "Check in"}
           </span>
           <span className="text-[11px] leading-snug text-ink-muted">

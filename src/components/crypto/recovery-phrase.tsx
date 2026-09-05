@@ -42,7 +42,7 @@ export function RecoveryPhrase({
           <KeyRound className="size-5" aria-hidden />
         </span>
         <div className="space-y-1.5">
-          <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+          <h1 className="text-2xl font-display text-ink">
             Your recovery phrase
           </h1>
           <p className="text-sm leading-relaxed text-ink-muted">

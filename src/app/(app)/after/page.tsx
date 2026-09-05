@@ -147,7 +147,7 @@ function Header() {
         <Check className="size-3.5" strokeWidth={3} aria-hidden />
         Saved
       </p>
-      <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+      <h1 className="text-2xl font-display text-ink">
         Thank you for noticing
       </h1>
     </header>

@@ -29,7 +29,7 @@ export default function RootPage() {
           A
         </span>
         <div className="space-y-1">
-          <p className="text-2xl font-extrabold tracking-tight text-ink">
+          <p className="text-2xl font-display text-ink">
             Aluna
           </p>
           <p className="text-sm text-ink-muted">

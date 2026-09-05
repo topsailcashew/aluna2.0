@@ -90,10 +90,7 @@ export function SensationStep({ sensations, onChange }: SensationStepProps) {
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
-          Sensation logging
-        </p>
-        <h2 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h2 className="text-2xl font-display text-ink">
           Where does your body speak?
         </h2>
         <p className="text-sm text-ink-muted">

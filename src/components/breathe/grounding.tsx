@@ -84,10 +84,10 @@ export function Grounding({
           <sense.Icon className="size-6" aria-hidden />
         </span>
         <div className="space-y-1.5">
-          <p className="text-xs font-bold tracking-[0.14em] text-ink-muted uppercase">
+          <p className="text-xs font-semibold text-ink-subtle">
             Grounding · {index + 1} of {SENSES.length}
           </p>
-          <h2 className="text-2xl font-extrabold tracking-tight text-balance text-ink">
+          <h2 className="text-2xl font-display text-balance text-ink">
             {sense.prompt}
           </h2>
           <p className="text-sm text-ink-muted">{sense.hint}</p>

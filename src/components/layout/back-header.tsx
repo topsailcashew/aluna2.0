@@ -29,7 +29,7 @@ export function BackHeader({
         <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
           {eyebrow}
         </p>
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h1 className="text-2xl font-display text-ink">
           {title}
         </h1>
         {subtitle && <p className="text-sm text-ink-muted">{subtitle}</p>}

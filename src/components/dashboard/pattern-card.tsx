@@ -48,14 +48,14 @@ export function PatternCard({ entries }: { entries: CheckInEntry[] }) {
           <p className="text-[11px] font-bold tracking-[0.14em] uppercase opacity-70">
             Most logged
           </p>
-          <p className="text-3xl leading-tight font-extrabold tracking-tight">
+          <p className="text-3xl leading-tight font-display">
             {dominant?.label ?? "—"}
           </p>
-          <p className="text-xs opacity-75">
-            {dominant
-              ? "the family that comes up most often"
-              : "log a feeling and it will appear here"}
-          </p>
+          {!dominant && (
+            <p className="text-xs opacity-75">
+              log a feeling and it will appear here
+            </p>
+          )}
         </div>
       </div>
 

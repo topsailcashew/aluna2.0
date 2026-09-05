@@ -24,7 +24,7 @@ export function AuthShell({
           A
         </Link>
         <div className="space-y-1.5">
-          <h1 className="text-3xl font-extrabold tracking-tight text-ink">
+          <h1 className="text-3xl font-display text-ink">
             {title}
           </h1>
           <p className="text-sm leading-relaxed text-ink-muted">{subtitle}</p>

@@ -27,10 +27,7 @@ export function ThoughtStep({
   return (
     <div className="space-y-6">
       <header className="space-y-1">
-        <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
-          Mind observation
-        </p>
-        <h2 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h2 className="text-2xl font-display text-ink">
           What has your mind been doing?
         </h2>
         <p className="text-sm text-ink-muted">

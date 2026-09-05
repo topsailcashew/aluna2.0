@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Fraunces, Hanken_Grotesk } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/lib/firebase/auth-context";
@@ -8,10 +8,22 @@ import { VaultProvider } from "@/lib/crypto/vault";
 import { ThemeProvider } from "@/components/layout/theme-provider";
 import "./globals.css";
 
-const jakarta = Plus_Jakarta_Sans({
+// UI and body: a warm humanist grotesque that stays legible at small sizes.
+const hanken = Hanken_Grotesk({
   subsets: ["latin"],
-  variable: "--font-plus-jakarta",
+  variable: "--font-hanken",
   display: "swap",
+});
+
+// The emotional register: a soft old-style serif with real personality, used
+// only on the headline moments — page titles, the reflection line, the mood
+// the day resolved to. Its warmth is the point; it is why the app reads as
+// written rather than scaffolded.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-fraunces",
+  display: "swap",
+  axes: ["SOFT", "opsz"],
 });
 
 export const metadata: Metadata = {
@@ -45,7 +57,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${jakarta.variable} antialiased`}>
+      <body className={`${hanken.variable} ${fraunces.variable} antialiased`}>
         <ThemeProvider nonce={nonce}>
           <AuthProvider>
             <VaultProvider>{children}</VaultProvider>
@@ -55,7 +67,7 @@ export default async function RootLayout({
               toastOptions={{
                 style: {
                   borderRadius: "1rem",
-                  fontFamily: "var(--font-plus-jakarta)",
+                  fontFamily: "var(--font-hanken), sans-serif",
                 },
               }}
             />

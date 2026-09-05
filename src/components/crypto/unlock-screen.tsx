@@ -70,7 +70,7 @@ export function UnlockScreen() {
             <Lock className="size-5" aria-hidden />
           </span>
           <div className="space-y-1.5">
-            <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+            <h1 className="text-2xl font-display text-ink">
               Unlock your entries
             </h1>
             <p className="text-sm leading-relaxed text-ink-muted">
@@ -177,7 +177,7 @@ export function SetUpEncryptionScreen() {
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-5 py-10">
       <div className="space-y-6">
         <div className="space-y-1.5">
-          <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+          <h1 className="text-2xl font-display text-ink">
             Finish setting up
           </h1>
           <p className="text-sm leading-relaxed text-ink-muted">

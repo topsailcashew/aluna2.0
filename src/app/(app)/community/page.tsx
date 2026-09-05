@@ -17,10 +17,7 @@ export default function CommunityPage() {
   return (
     <div className="space-y-5">
       <header className="space-y-1">
-        <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
-          Community
-        </p>
-        <h1 className="text-2xl font-extrabold tracking-tight text-ink">
+        <h1 className="text-2xl font-display text-ink">
           You are not the only one
         </h1>
         <p className="text-sm text-ink-muted">

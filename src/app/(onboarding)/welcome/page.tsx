@@ -101,7 +101,7 @@ export default function WelcomePage() {
           <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
             {screen.eyebrow}
           </p>
-          <h1 className="text-3xl leading-tight font-extrabold tracking-tight text-balance text-ink">
+          <h1 className="text-3xl leading-tight font-display text-balance text-ink">
             {screen.title}
           </h1>
           <p className="text-sm leading-relaxed text-ink-muted">{screen.body}</p>

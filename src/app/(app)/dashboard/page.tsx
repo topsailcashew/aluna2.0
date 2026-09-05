@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Lightbulb, Wind } from "lucide-react";
+import { ChevronRight, Lightbulb, Wind } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/app-header";
@@ -77,16 +77,17 @@ export default function DashboardPage() {
           />
 
           <div className="space-y-1.5 px-2 pt-1 pb-1 text-center">
-            <p className="text-sm leading-relaxed font-medium text-balance text-ink">
+            <p className="font-display text-lg leading-snug text-balance text-ink italic">
               {reflection.text}
             </p>
             {reflection.action && (
               <Link
                 href={reflection.action.href}
-                className="inline-block text-xs font-bold transition-opacity hover:opacity-75"
+                className="inline-flex items-center gap-1 text-xs font-bold transition-opacity hover:opacity-75"
                 style={{ color: family?.color ?? "var(--color-deep-600)" }}
               >
-                {reflection.action.label} →
+                {reflection.action.label}
+                <ChevronRight className="size-3.5" aria-hidden />
               </Link>
             )}
           </div>

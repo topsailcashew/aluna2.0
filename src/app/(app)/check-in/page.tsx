@@ -216,7 +216,7 @@ function CheckInFlow() {
             </Button>
           ) : (
             <Button onClick={goNext} size="lg" fullWidth>
-              Next: {TITLES[steps[index + 1]]}
+              Continue
               <ArrowRight className="size-4" aria-hidden />
             </Button>
           )}
