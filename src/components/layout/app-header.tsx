@@ -31,7 +31,7 @@ export function AppHeader({
         />
       </Link>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-xl font-display text-ink">
+        <p className="truncate text-lg font-display text-ink">
           {greeting()}, {name}
         </p>
         <p className="truncate text-xs text-ink-muted">{subtitle}</p>

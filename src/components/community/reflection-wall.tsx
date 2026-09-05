@@ -117,7 +117,7 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
     <div className="space-y-4">
       <Card className="space-y-3">
         <div className="space-y-1">
-          <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
+          <p className="text-xs font-bold text-deep-500 dark:text-deep-300">
             This week&apos;s prompt
           </p>
           <p className="text-base leading-snug font-extrabold text-ink">
@@ -169,77 +169,117 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
             />
           </Card>
         ) : (
-          <ul className="space-y-3">
-            {reflections.map((reflection) => {
+          /* A timeline: one vertical rail, a mood-coloured node per post, and
+             the card to its right. The newest sits at the live end of the rail,
+             lifted and tinted; the rest recede into a flat wash. */
+          <ol className="relative space-y-3">
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-3 bottom-3 left-[7px] w-px bg-line"
+            />
+            {reflections.map((reflection, i) => {
               const primary = reflection.primary
                 ? PRIMARY_BY_ID.get(reflection.primary)
                 : undefined;
+              const tone = primary?.color ?? "var(--ink-subtle)";
               const mine = mineIds.has(reflection.id);
               const active = resonated.has(reflection.id);
+              const newest = i === 0;
 
               return (
                 <li
                   key={reflection.id}
-                  className="tone-surface rounded-3xl p-4"
-                  style={
-                    {
-                      "--tone": primary?.color ?? "var(--ink-subtle)",
-                    } as CSSProperties
-                  }
+                  className="relative pl-7"
+                  style={{ "--tone": tone } as CSSProperties}
                 >
-                  <p className="text-sm leading-relaxed font-medium break-words">
-                    {reflection.text}
-                  </p>
+                  {/* Node on the rail. The white ring lifts it off the line. */}
+                  <span
+                    aria-hidden
+                    className="absolute top-3.5 left-0 grid w-[15px] place-items-center"
+                  >
+                    <span
+                      className={cn(
+                        "rounded-full ring-4 ring-[var(--surface)]",
+                        newest ? "size-3.5" : "size-2.5",
+                      )}
+                      style={{ backgroundColor: tone }}
+                    />
+                  </span>
 
-                  <div className="mt-3 flex items-center gap-3">
-                    <span className="text-[11px] font-semibold opacity-70">
-                      {relativeTime(reflection.createdAt)}
-                      {primary && ` · felt ${primary.label.toLowerCase()}`}
-                    </span>
+                  <div
+                    className={cn(
+                      "rounded-3xl p-4",
+                      newest && "tone-surface shadow-card",
+                    )}
+                    style={
+                      newest
+                        ? undefined
+                        : {
+                            backgroundColor:
+                              "color-mix(in oklab, var(--tone) 12%, var(--surface))",
+                            color:
+                              "color-mix(in oklab, var(--tone) 60%, var(--ink))",
+                          }
+                    }
+                  >
+                    <p className="text-sm leading-relaxed font-medium break-words">
+                      {reflection.text}
+                    </p>
 
-                    <span className="flex-1" />
+                    <div className="mt-3 flex items-center gap-2">
+                      <span className="text-[11px] font-semibold opacity-70">
+                        {relativeTime(reflection.createdAt)}
+                        {primary && ` · felt ${primary.label.toLowerCase()}`}
+                      </span>
 
-                    {mine && (
+                      <span className="flex-1" />
+
+                      {mine && (
+                        <button
+                          type="button"
+                          onClick={() => void remove(reflection)}
+                          aria-label="Delete your reflection"
+                          className="grid size-8 place-items-center rounded-full bg-surface/60 transition-colors hover:bg-surface"
+                        >
+                          <Trash2 className="size-3.5" aria-hidden />
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        onClick={() => void remove(reflection)}
-                        aria-label="Delete your reflection"
-                        className="grid size-8 place-items-center rounded-full bg-surface/60 transition-colors hover:bg-surface"
+                        onClick={() => void resonate(reflection)}
+                        aria-pressed={active}
+                        aria-label={
+                          active
+                            ? "Remove your acknowledgement"
+                            : "This resonates with me"
+                        }
+                        className={cn(
+                          "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-bold transition-colors",
+                          active
+                            ? "bg-surface text-ink"
+                            : "bg-surface/60 hover:bg-surface",
+                        )}
                       >
-                        <Trash2 className="size-3.5" aria-hidden />
+                        <Heart
+                          className="size-3.5"
+                          fill={active ? "currentColor" : "none"}
+                          aria-hidden
+                        />
+                        {reflection.resonateCount > 0 ? (
+                          <span className="tabular-nums">
+                            {reflection.resonateCount}
+                          </span>
+                        ) : (
+                          "Resonates"
+                        )}
                       </button>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => void resonate(reflection)}
-                      aria-pressed={active}
-                      aria-label={
-                        active
-                          ? "Remove your acknowledgement"
-                          : "This resonates with me"
-                      }
-                      className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold transition-colors",
-                        active
-                          ? "bg-surface text-ink"
-                          : "bg-surface/60 hover:bg-surface",
-                      )}
-                    >
-                      <Heart
-                        className="size-3.5"
-                        fill={active ? "currentColor" : "none"}
-                        aria-hidden
-                      />
-                      {reflection.resonateCount > 0
-                        ? reflection.resonateCount
-                        : "Resonates"}
-                    </button>
+                    </div>
                   </div>
                 </li>
               );
             })}
-          </ul>
+          </ol>
         )}
       </section>
     </div>

@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
+  CalendarCheck,
   CalendarDays,
   ChevronRight,
+  Flame,
   HelpCircle,
   LineChart,
   LogOut,
@@ -20,6 +23,7 @@ import { AvatarEditor } from "@/components/profile/avatar-editor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { currentStreak } from "@/lib/analytics";
 import { useEntries } from "@/hooks/use-entries";
 import { useProfile } from "@/hooks/use-profile";
 import { changeDisplayName } from "@/lib/firebase/account";
@@ -79,6 +83,7 @@ export default function ProfilePage() {
 
   if (!user) return null;
   const name = profile.displayName || user.displayName || "";
+  const streak = currentStreak(entries);
 
   const saveName = async () => {
     const trimmed = nameDraft.trim();
@@ -150,10 +155,10 @@ export default function ProfilePage() {
                 <p className="truncate text-xs text-ink-muted">{user.email}</p>
                 <p className="mt-0.5 text-[11px] text-ink-subtle">
                   {loading
-                    ? "Counting your entries…"
+                    ? "Loading…"
                     : entries.length === 0
                       ? "No check-ins yet"
-                      : `${entries.length} check-in${entries.length === 1 ? "" : "s"} · last ${relativeTime(entries[0].createdAt)}`}
+                      : `Last check-in ${relativeTime(entries[0].createdAt)}`}
                 </p>
               </>
             )}
@@ -174,6 +179,48 @@ export default function ProfilePage() {
           )}
         </div>
       </Card>
+
+      {!loading && entries.length > 0 && (
+        <section aria-label="Your record" className="grid grid-cols-2 gap-3">
+          <div
+            className="card-metric flex flex-col gap-3 p-4"
+            style={{ "--tone": "var(--color-fearful)" } as CSSProperties}
+          >
+            <span className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="grid size-7 place-items-center rounded-xl text-white"
+                style={{ backgroundColor: "var(--color-fearful)" }}
+              >
+                <CalendarCheck className="size-4" strokeWidth={2.4} />
+              </span>
+              <span className="text-xs font-bold opacity-70">Check-ins</span>
+            </span>
+            <span className="stat text-3xl">{entries.length}</span>
+          </div>
+          <div
+            className="card-metric flex flex-col gap-3 p-4"
+            style={{ "--tone": "var(--color-happy)" } as CSSProperties}
+          >
+            <span className="flex items-center gap-2">
+              <span
+                aria-hidden
+                className="grid size-7 place-items-center rounded-xl text-white"
+                style={{ backgroundColor: "var(--color-happy)" }}
+              >
+                <Flame className="size-4" strokeWidth={2.4} />
+              </span>
+              <span className="text-xs font-bold opacity-70">Day streak</span>
+            </span>
+            <span className="flex items-baseline gap-1">
+              <span className="stat text-3xl">{streak}</span>
+              <span className="text-xs font-semibold opacity-70">
+                {streak === 1 ? "day" : "days"}
+              </span>
+            </span>
+          </div>
+        </section>
+      )}
 
       <nav aria-label="Profile sections">
         <Card className="divide-y divide-line p-0">

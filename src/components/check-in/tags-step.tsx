@@ -67,7 +67,7 @@ export function TagsStep({ tags, onChange }: TagsStepProps) {
                     className={cn(
                       "rounded-2xl border py-2.5 text-sm font-bold transition-colors",
                       active
-                        ? "border-deep-600 bg-deep-600 text-white"
+                        ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)]"
                         : "border-line bg-surface text-ink hover:border-deep-300",
                     )}
                   >
@@ -94,7 +94,7 @@ export function TagsStep({ tags, onChange }: TagsStepProps) {
                 className={cn(
                   "rounded-full border px-3.5 py-2 text-sm font-semibold transition-colors",
                   active
-                    ? "border-deep-600 bg-deep-600 text-white"
+                    ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)]"
                     : "border-line bg-surface text-ink hover:border-deep-300",
                 )}
               >

@@ -124,8 +124,8 @@ export default function JournalPage() {
           </p>
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/85 backdrop-blur-xl">
-          <div className="mx-auto max-w-lg px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
+        <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.9rem)] z-30 px-4">
+          <div className="mx-auto max-w-lg rounded-4xl border border-line bg-surface/90 p-3.5 shadow-lift backdrop-blur-xl">
             <Button onClick={save} loading={saving} size="lg" fullWidth>
               {editing.id ? "Save changes" : "Save note"}
             </Button>

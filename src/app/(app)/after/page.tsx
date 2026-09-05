@@ -65,14 +65,14 @@ function AfterCheckIn() {
         return (
           <section
             key={id}
-            className="tone-surface space-y-4 rounded-4xl p-5"
+            className="card-hero space-y-4 p-5"
             style={{ "--tone": family?.color } as CSSProperties}
           >
             <div className="space-y-2">
-              <p className="text-[11px] font-bold tracking-[0.14em] uppercase opacity-70">
+              <p className="text-xs font-bold opacity-70">
                 {family?.label} · {SUB_BY_ID.get(id)?.label}
               </p>
-              <h2 className="text-xl font-extrabold tracking-tight text-balance">
+              <h2 className="font-display text-2xl text-balance">
                 {guidance.heading}
               </h2>
               <p className="text-sm leading-relaxed opacity-90">
@@ -81,7 +81,7 @@ function AfterCheckIn() {
             </div>
 
             <div className="space-y-2.5">
-              <p className="text-xs font-bold tracking-wide uppercase opacity-70">
+              <p className="text-xs font-bold opacity-70">
                 Things that can help
               </p>
               <ol className="space-y-2.5">
@@ -143,7 +143,7 @@ function AfterCheckIn() {
 function Header() {
   return (
     <header className="space-y-1 pt-2">
-      <p className="inline-flex items-center gap-1.5 text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
+      <p className="inline-flex items-center gap-1.5 text-xs font-bold text-deep-500 dark:text-deep-300">
         <Check className="size-3.5" strokeWidth={3} aria-hidden />
         Saved
       </p>

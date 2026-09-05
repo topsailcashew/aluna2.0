@@ -39,7 +39,7 @@ export function CheckboxCard({
         className={cn(
           "mt-0.5 grid size-5 shrink-0 place-items-center rounded-md border-2 transition-colors",
           checked
-            ? "border-deep-600 bg-deep-600 text-white"
+            ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)]"
             : "border-line-strong bg-surface",
         )}
       >

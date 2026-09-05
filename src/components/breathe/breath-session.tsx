@@ -259,7 +259,7 @@ export function BreathSession({
                 >
                   {frame.phase.label}
                 </p>
-                <p className="mt-1 text-4xl font-black tabular-nums text-white drop-shadow">
+                <p className="stat mt-1 text-5xl text-white drop-shadow">
                   {frame.remaining}
                 </p>
               </>

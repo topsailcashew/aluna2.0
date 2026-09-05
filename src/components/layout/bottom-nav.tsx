@@ -15,40 +15,50 @@ const TABS = [
   { href: "/profile", label: "Profile", Icon: User },
 ] as const;
 
+/**
+ * Floating dark pill, per the reference. Sits off the bottom edge, icons only,
+ * the active one lifted into a light chip. The pill is near-black in light and
+ * a raised surface in dark — a consistent dark bar either way, which is what
+ * makes it read as "chrome" against the warm mood aura behind it.
+ */
 export function BottomNav() {
   const pathname = usePathname();
+
+  // The check-in is a focused, multi-step flow with its own back control and a
+  // fixed Continue bar — the tab bar only competes with it, so it steps aside.
+  if (pathname.startsWith("/check-in")) return null;
 
   return (
     <nav
       aria-label="Primary"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface/85 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center pb-[calc(env(safe-area-inset-bottom)+0.6rem)]"
     >
-      <ul className="mx-auto flex max-w-lg items-stretch justify-around px-2">
+      <ul className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-[#12262c] px-2 py-2 shadow-lift dark:bg-[#1a2c33]">
         {TABS.map(({ href, label, Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
-            <li key={href} className="flex-1">
+            <li key={href}>
               <Link
                 href={href}
+                aria-label={label}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "relative flex flex-col items-center gap-1 py-2.5 text-[10px] font-bold transition-colors",
-                  active ? "text-deep-600 dark:text-deep-200" : "text-ink-subtle",
+                  "relative grid size-12 place-items-center rounded-full transition-colors",
+                  active ? "text-[#12262c]" : "text-white/55 hover:text-white/85",
                 )}
               >
                 {active && (
                   <motion.span
                     layoutId="nav-pill"
-                    className="absolute inset-x-1.5 top-1 bottom-1 -z-10 rounded-2xl bg-deep-50 dark:bg-deep-900"
+                    className="absolute inset-0 -z-10 rounded-full bg-white"
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}
                 <Icon
                   className="size-5"
-                  strokeWidth={active ? 2.5 : 2}
+                  strokeWidth={active ? 2.6 : 2}
                   aria-hidden
                 />
-                {label}
               </Link>
             </li>
           );

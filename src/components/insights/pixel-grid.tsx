@@ -109,14 +109,14 @@ export function PixelGrid({ entries }: { entries: CheckInEntry[] }) {
                           ? "no check-in"
                           : `${cell.count} check-in${cell.count === 1 ? "" : "s"}`
                       }`}
-                      className="size-3.5 rounded-[3px]"
+                      className="size-3.5 rounded-[4px]"
                       style={{
                         backgroundColor: future
                           ? "transparent"
                           : cell.family
                             ? PRIMARY_BY_ID.get(cell.family)?.color
                             : "var(--surface-sunken)",
-                        outline: isToday ? "1.5px solid var(--color-deep-500)" : undefined,
+                        outline: isToday ? "1.5px solid var(--marker)" : undefined,
                         outlineOffset: "1px",
                       }}
                     />

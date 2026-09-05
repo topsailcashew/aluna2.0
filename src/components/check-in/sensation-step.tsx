@@ -154,7 +154,7 @@ export function SensationStep({ sensations, onChange }: SensationStepProps) {
                   className={cn(
                     "rounded-2xl border px-3.5 py-2 text-sm font-semibold transition-all",
                     isSelected
-                      ? "border-deep-600 bg-deep-600 text-white shadow-[0_8px_18px_-12px_rgb(16_68_82/0.9)]"
+                      ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)] shadow-[0_8px_18px_-12px_rgb(16_68_82/0.9)]"
                       : "border-line bg-surface text-ink hover:border-deep-300",
                   )}
                 >

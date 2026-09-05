@@ -54,6 +54,9 @@
   --ink: #12262c;
   --ink-muted: #5b7278;
   --ink-subtle: #8ba0a5;
+  /* The single high-contrast focal: selected day, peak bar, active nav. */
+  --marker: #12262c;
+  --marker-ink: #ffffff;
   --shadow-card: 0 1px 2px rgb(16 46 55 / 0.05);
   --shadow-lift: 0 2px 4px rgb(16 46 55 / 0.05), 0 18px 40px -18px rgb(16 46 55 / 0.24);
   color-scheme: light;
@@ -70,6 +73,9 @@
   --ink: #e9f2f2;
   --ink-muted: #9fb5ba;
   --ink-subtle: #6f8990;
+  /* In dark the focal inverts: a light marker on the dark ground. */
+  --marker: #e9f2f2;
+  --marker-ink: #0c1a1f;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.35);
   --shadow-lift: 0 2px 4px rgb(0 0 0 / 0.35), 0 18px 40px -18px rgb(0 0 0 / 0.7);
   color-scheme: dark;
@@ -86,6 +92,8 @@
   --color-ink: var(--ink);
   --color-ink-muted: var(--ink-muted);
   --color-ink-subtle: var(--ink-subtle);
+  --color-marker: var(--marker);
+  --color-marker-ink: var(--marker-ink);
   --shadow-card: var(--shadow-card);
   --shadow-lift: var(--shadow-lift);
 }
@@ -137,12 +145,30 @@
 }
 
 @layer utilities {
+  /* The display voice: heavy grotesque, tight, for headings and page titles.
+     Every heading tagged .font-display flips to this by changing one rule. */
   .font-display {
-    font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+    font-family: var(--font-bricolage), var(--font-hanken), sans-serif;
+    letter-spacing: -0.02em;
+    font-weight: 800;
+    line-height: 1.02;
+  }
+
+  /* Big numbers, reference-style: heavy, tight, tabular so columns line up. */
+  .stat {
+    font-family: var(--font-bricolage), var(--font-hanken), sans-serif;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  /* Fraunces, kept for a single editorial accent (the reflection line). */
+  .font-quote {
+    font-family: var(--font-fraunces), Georgia, serif;
     font-optical-sizing: auto;
-    font-variation-settings: "SOFT" 40, "opsz" 40;
-    letter-spacing: -0.015em;
-    font-weight: 500;
+    font-variation-settings: "SOFT" 60, "opsz" 40;
+    letter-spacing: -0.01em;
   }
 
   .card {
@@ -183,6 +209,35 @@
 
   .tone-strong {
     color: color-mix(in oklab, var(--tone) 82%, var(--ink));
+  }
+
+  /* A mood-coloured gradient hero surface (the reference's Activity card),
+     tinted by whatever family colour is set on --tone. Warm and diffuse in
+     light; deeper in dark. Text on top uses --hero-ink. */
+  .card-hero {
+    background:
+      radial-gradient(120% 120% at 0% 0%, color-mix(in oklab, var(--tone) 42%, var(--surface)), transparent 70%),
+      linear-gradient(150deg, color-mix(in oklab, var(--tone) 30%, var(--surface)), color-mix(in oklab, var(--tone) 16%, var(--surface)));
+    border: 1px solid color-mix(in oklab, var(--tone) 26%, var(--line));
+    border-radius: var(--radius-5xl);
+    color: color-mix(in oklab, var(--tone) 72%, var(--ink));
+  }
+
+  /* A pale-tint metric card: family wash + a small filled icon chip + a big
+     number. The metric equivalent of the reference's Water/Calories cards. */
+  .card-metric {
+    background-color: color-mix(in oklab, var(--tone) 16%, var(--surface));
+    border: 1px solid color-mix(in oklab, var(--tone) 18%, var(--line));
+    border-radius: var(--radius-4xl);
+    color: color-mix(in oklab, var(--tone) 70%, var(--ink));
+  }
+
+  /* Diagonal hatch fill for bars/areas. Reference the pattern by id per chart;
+     this is the tile the SVG <pattern> stamps. */
+  .hatch-line {
+    stroke: currentColor;
+    stroke-width: 1.4;
+    opacity: 0.55;
   }
 
   /* Splash. No fill-mode, so if the animation never runs the mark is simply

@@ -53,7 +53,7 @@ export default function InsightsPage() {
             className={cn(
               "rounded-2xl border py-2.5 text-sm font-bold transition-colors",
               range === option.days
-                ? "border-deep-600 bg-deep-600 text-white"
+                ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)]"
                 : "border-line bg-surface text-ink hover:border-deep-300",
             )}
           >

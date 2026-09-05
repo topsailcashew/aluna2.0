@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -22,7 +22,8 @@ import { dayKey } from "@/lib/data/prompts";
 import type { CheckInEntry } from "@/lib/types";
 import { cn, formatDateTime } from "@/lib/utils";
 
-const WEEKDAY = new Intl.DateTimeFormat(undefined, { weekday: "narrow" });
+const timeOf = (date: Date) =>
+  date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
 
 export default function HistoryPage() {
   const { entries, loading } = useEntries();
@@ -35,6 +36,7 @@ export default function HistoryPage() {
   // when React happens to re-run the component.
   const [openedAt] = useState(() => Date.now());
   const [filter, setFilter] = useState<PrimaryEmotionId | null>(null);
+  const stripRef = useRef<HTMLDivElement>(null);
 
   const filtered = useMemo(
     () =>
@@ -55,29 +57,42 @@ export default function HistoryPage() {
     return map;
   }, [filtered]);
 
-  /** Leading blanks so the first of the month lands under its weekday. */
-  const cells = useMemo(() => {
-    const first = new Date(month.getFullYear(), month.getMonth(), 1);
-    const daysInMonth = new Date(
+  /** Every day of the visible month, for the horizontal strip. */
+  const days = useMemo(() => {
+    const count = new Date(
       month.getFullYear(),
       month.getMonth() + 1,
       0,
     ).getDate();
-
-    const out: (Date | null)[] = Array.from({ length: first.getDay() }, () => null);
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      out.push(new Date(month.getFullYear(), month.getMonth(), day));
-    }
-    return out;
+    return Array.from(
+      { length: count },
+      (_, i) => new Date(month.getFullYear(), month.getMonth(), i + 1),
+    );
   }, [month]);
 
-  const selectedEntries = selected ? (byDay.get(selected) ?? []) : [];
+  // The selected day's entries, newest first — the timeline runs from the live
+  // end downward, so the most recent check-in sits at the top and is lifted.
+  const selectedEntries = useMemo(() => {
+    const list = selected ? (byDay.get(selected) ?? []) : [];
+    return [...list].sort(
+      (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+    );
+  }, [selected, byDay]);
+
   const isThisMonth =
     month.getFullYear() === new Date().getFullYear() &&
     month.getMonth() === new Date().getMonth();
 
   const shift = (by: number) =>
     setMonth(new Date(month.getFullYear(), month.getMonth() + by, 1));
+
+  // Keep the chosen day in view as the month or selection changes.
+  useEffect(() => {
+    const el = stripRef.current?.querySelector<HTMLElement>(
+      '[data-selected="true"]',
+    );
+    el?.scrollIntoView({ block: "nearest", inline: "center" });
+  }, [selected, month]);
 
   return (
     <div className="space-y-5">
@@ -87,46 +102,39 @@ export default function HistoryPage() {
         subtitle="Every check-in you have written"
       />
 
-      <Card className="space-y-4">
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => shift(-1)}
-            aria-label="Previous month"
-            className="grid size-9 place-items-center rounded-full bg-surface-sunken text-ink-muted transition-colors hover:text-ink"
-          >
-            <ChevronLeft className="size-4" aria-hidden />
-          </button>
-          <p className="text-sm font-extrabold text-ink">
+      {/* Month + day strip, on the open background rather than in a card. */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2 px-1">
+          <h2 className="flex-1 text-xl font-display text-ink">
             {month.toLocaleDateString(undefined, {
               month: "long",
               year: "numeric",
             })}
-          </p>
+          </h2>
+          <button
+            type="button"
+            onClick={() => shift(-1)}
+            aria-label="Previous month"
+            className="grid size-9 place-items-center rounded-full bg-surface text-ink-muted shadow-card transition-colors hover:text-ink"
+          >
+            <ChevronLeft className="size-4" aria-hidden />
+          </button>
           <button
             type="button"
             onClick={() => shift(1)}
             disabled={isThisMonth}
             aria-label="Next month"
-            className="grid size-9 place-items-center rounded-full bg-surface-sunken text-ink-muted transition-colors hover:text-ink disabled:opacity-35"
+            className="grid size-9 place-items-center rounded-full bg-surface text-ink-muted shadow-card transition-colors hover:text-ink disabled:opacity-35"
           >
             <ChevronRight className="size-4" aria-hidden />
           </button>
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: 7 }, (_, index) => (
-            <span
-              key={index}
-              className="pb-1 text-center text-[10px] font-bold text-ink-subtle"
-            >
-              {WEEKDAY.format(new Date(2024, 8, 1 + index))}
-            </span>
-          ))}
-
-          {cells.map((date, index) => {
-            if (!date) return <span key={`blank-${index}`} />;
-
+        <div
+          ref={stripRef}
+          className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1"
+        >
+          {days.map((date) => {
             const key = dayKey(date);
             const dayEntries = byDay.get(key) ?? [];
             const families = dayEntries.flatMap((e) =>
@@ -144,38 +152,63 @@ export default function HistoryPage() {
                 key={key}
                 type="button"
                 disabled={future}
+                data-selected={isSelected}
                 onClick={() => setSelected(key)}
                 aria-pressed={isSelected}
-                aria-label={`${date.toLocaleDateString(undefined, { day: "numeric", month: "long" })}, ${
+                aria-label={`${date.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}, ${
                   dayEntries.length === 0
                     ? "no check-in"
                     : `${dayEntries.length} check-in${dayEntries.length === 1 ? "" : "s"}`
                 }`}
                 className={cn(
-                  "grid aspect-square place-items-center rounded-xl text-xs font-bold transition-all disabled:opacity-25",
-                  isSelected && "ring-2 ring-deep-500 ring-offset-1 ring-offset-[var(--surface)]",
-                  lead ? "text-white" : "text-ink-muted",
+                  "flex w-[3.4rem] shrink-0 flex-col items-center gap-1 rounded-2xl py-2.5 transition-colors disabled:opacity-30",
+                  isSelected
+                    ? "bg-[var(--marker)] text-[var(--marker-ink)]"
+                    : "bg-surface text-ink shadow-card hover:bg-surface-muted",
                 )}
-                style={{
-                  backgroundColor: lead ? lead.color : "var(--surface-sunken)",
-                  outline: isToday && !isSelected ? "1.5px solid var(--border-strong)" : undefined,
-                }}
               >
-                {date.getDate()}
+                <span
+                  className={cn(
+                    "text-[10px] font-bold",
+                    isSelected ? "opacity-80" : "text-ink-subtle",
+                  )}
+                >
+                  {date.toLocaleDateString(undefined, { weekday: "short" })}
+                </span>
+                <span className="stat text-lg leading-none">
+                  {date.getDate()}
+                </span>
+                <span
+                  aria-hidden
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    !lead && "opacity-0",
+                  )}
+                  style={{
+                    backgroundColor: isSelected
+                      ? "var(--marker-ink)"
+                      : (lead?.color ?? "transparent"),
+                    outline:
+                      isToday && !isSelected && !lead
+                        ? "1.5px solid var(--border-strong)"
+                        : undefined,
+                  }}
+                />
               </button>
             );
           })}
         </div>
 
-        <div className="flex flex-wrap gap-1.5">
+        {/* Emotion filter, as pill tabs. */}
+        <div className="no-scrollbar -mx-4 flex gap-1.5 overflow-x-auto px-4">
           <button
             type="button"
             onClick={() => setFilter(null)}
             aria-pressed={filter === null}
             className={cn(
-              "rounded-full px-2.5 py-1 text-[11px] font-bold transition-colors",
+              "shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors",
               filter === null
-                ? "bg-deep-700 text-white"
+                ? "bg-[var(--marker)] text-[var(--marker-ink)]"
                 : "bg-surface-sunken text-ink-muted hover:text-ink",
             )}
           >
@@ -189,7 +222,7 @@ export default function HistoryPage() {
                 setFilter(filter === primary.id ? null : primary.id)
               }
               aria-pressed={filter === primary.id}
-              className="rounded-full px-2.5 py-1 text-[11px] font-bold transition-opacity"
+              className="shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold transition-opacity"
               style={{
                 backgroundColor:
                   filter === primary.id ? primary.color : `${primary.color}26`,
@@ -200,7 +233,7 @@ export default function HistoryPage() {
             </button>
           ))}
         </div>
-      </Card>
+      </section>
 
       {loading ? (
         <ChartSkeleton height={160} />
@@ -217,17 +250,68 @@ export default function HistoryPage() {
           />
         </Card>
       ) : (
-        <div className="space-y-3">
-          {selectedEntries.map((entry) => (
-            <EntryDetail key={entry.id} entry={entry} />
-          ))}
-        </div>
+        <ol className="relative space-y-3">
+          {selectedEntries.map((entry, i) => {
+            const families = primaryIdsFrom(entry.emotions);
+            const primary = families[0]
+              ? PRIMARY_BY_ID.get(families[0])
+              : undefined;
+            const tone = primary?.color ?? "var(--ink-subtle)";
+            const newest = i === 0;
+            const last = i === selectedEntries.length - 1;
+
+            return (
+              <li
+                key={entry.id}
+                className="relative grid grid-cols-[2.9rem_1fr] gap-3"
+                style={{ "--tone": tone } as CSSProperties}
+              >
+                <div className="pt-2.5 text-right">
+                  <p className="stat text-sm leading-none text-ink">
+                    {timeOf(entry.createdAt)}
+                  </p>
+                </div>
+
+                <div className="relative pl-6">
+                  {/* Rail: connects nodes, stops short on the last row. */}
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "absolute top-3 left-[7px] w-px bg-line",
+                      last ? "h-4" : "bottom-[-0.75rem]",
+                    )}
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute top-2.5 left-0 grid w-[15px] place-items-center"
+                  >
+                    <span
+                      className={cn(
+                        "rounded-full ring-4 ring-[var(--surface)]",
+                        newest ? "size-3.5" : "size-2.5",
+                      )}
+                      style={{ backgroundColor: tone }}
+                    />
+                  </span>
+
+                  <EntryDetail entry={entry} newest={newest} />
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       )}
     </div>
   );
 }
 
-function EntryDetail({ entry }: { entry: CheckInEntry }) {
+function EntryDetail({
+  entry,
+  newest,
+}: {
+  entry: CheckInEntry;
+  newest: boolean;
+}) {
   const families = primaryIdsFrom(entry.emotions);
   const primary = families[0] ? PRIMARY_BY_ID.get(families[0]) : undefined;
   const journalAnswers = Object.entries(entry.journal ?? {}).filter(
@@ -248,9 +332,14 @@ function EntryDetail({ entry }: { entry: CheckInEntry }) {
   }
 
   return (
-    <Card
-      className="tone-surface space-y-3 border-transparent"
-      style={{ "--tone": primary?.color ?? "var(--ink-subtle)" } as CSSProperties}
+    <div
+      className={cn(
+        "tone-surface space-y-3 rounded-3xl p-4",
+        newest && "shadow-card",
+      )}
+      style={
+        { "--tone": primary?.color ?? "var(--ink-subtle)" } as CSSProperties
+      }
     >
       <div>
         <p className="text-sm font-extrabold">
@@ -261,9 +350,6 @@ function EntryDetail({ entry }: { entry: CheckInEntry }) {
               {subOf(entry.emotions[0])?.label}
             </span>
           )}
-        </p>
-        <p className="text-[11px] opacity-70">
-          {formatDateTime(entry.createdAt)}
         </p>
       </div>
 
@@ -302,6 +388,6 @@ function EntryDetail({ entry }: { entry: CheckInEntry }) {
           ))}
         </div>
       )}
-    </Card>
+    </div>
   );
 }

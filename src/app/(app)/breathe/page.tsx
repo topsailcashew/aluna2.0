@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { CSSProperties } from "react";
 import { Check, Play } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -50,12 +51,14 @@ export default function BreathePage() {
               onClick={() => setSelected(pattern)}
               aria-pressed={active}
               className={cn(
-                "w-full rounded-3xl border p-3.5 text-left transition-all",
+                "w-full p-4 text-left transition-all",
                 active
-                  ? "border-transparent shadow-lift"
-                  : "border-line bg-surface hover:border-line-strong",
+                  ? "card-hero shadow-lift"
+                  : "rounded-3xl border border-line bg-surface hover:border-line-strong",
               )}
-              style={active ? { backgroundColor: `${pattern.accent}1a` } : undefined}
+              style={
+                active ? ({ "--tone": pattern.accent } as CSSProperties) : undefined
+              }
             >
               <span className="flex items-center gap-3">
                 <span
@@ -111,8 +114,8 @@ export default function BreathePage() {
         Sound plays through your device — headphones are nicer.
       </p>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/85 backdrop-blur-xl">
-        <div className="mx-auto max-w-lg space-y-2.5 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
+      <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.9rem)] z-30 px-4">
+        <div className="mx-auto max-w-lg space-y-2.5 rounded-4xl border border-line bg-surface/90 p-3.5 shadow-lift backdrop-blur-xl">
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold text-ink">How long?</p>
             <p className="text-xs text-ink-subtle">about {breaths} breaths</p>
@@ -133,7 +136,7 @@ export default function BreathePage() {
                 className={cn(
                   "rounded-xl border py-2 text-sm font-bold transition-colors",
                   minutes === value
-                    ? "border-deep-600 bg-deep-600 text-white"
+                    ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)]"
                     : "border-line bg-surface text-ink hover:border-deep-300",
                 )}
               >

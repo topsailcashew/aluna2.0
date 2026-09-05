@@ -202,7 +202,7 @@ function CheckInFlow() {
       </section>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/80 backdrop-blur-xl">
-        <div className="mx-auto max-w-lg space-y-2 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+4.5rem)]">
+        <div className="mx-auto max-w-lg space-y-2 px-4 pt-3 pb-[calc(env(safe-area-inset-bottom)+1rem)]">
           {isLast ? (
             <Button
               onClick={submit}

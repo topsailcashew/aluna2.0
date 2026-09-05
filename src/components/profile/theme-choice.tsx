@@ -43,7 +43,7 @@ export function ThemeChoice() {
               className={cn(
                 "flex flex-col items-center gap-1.5 rounded-2xl border py-3 text-xs font-bold transition-colors",
                 active
-                  ? "border-deep-600 bg-deep-600 text-white"
+                  ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)]"
                   : "border-line bg-surface text-ink-muted hover:border-deep-300 hover:text-ink",
               )}
             >

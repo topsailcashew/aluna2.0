@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Hanken_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, Fraunces, Hanken_Grotesk } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/lib/firebase/auth-context";
@@ -15,10 +15,17 @@ const hanken = Hanken_Grotesk({
   display: "swap",
 });
 
-// The emotional register: a soft old-style serif with real personality, used
-// only on the headline moments — page titles, the reflection line, the mood
-// the day resolved to. Its warmth is the point; it is why the app reads as
-// written rather than scaffolded.
+// The display voice: a heavy, characterful grotesque for headings and big
+// numbers. Confident and modern rather than neutral — the app's personality now
+// lives here.
+const bricolage = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+  display: "swap",
+});
+
+// Kept for one job only: the reflection line on the home screen. A soft serif
+// used as a single editorial accent among the grotesque.
 const fraunces = Fraunces({
   subsets: ["latin"],
   variable: "--font-fraunces",
@@ -57,7 +64,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${hanken.variable} ${fraunces.variable} antialiased`}>
+      <body className={`${hanken.variable} ${bricolage.variable} ${fraunces.variable} antialiased`}>
         <ThemeProvider nonce={nonce}>
           <AuthProvider>
             <VaultProvider>{children}</VaultProvider>

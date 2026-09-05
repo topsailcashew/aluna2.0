@@ -5,6 +5,7 @@ import { Loader2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 import { Card, CardSubtitle, CardTitle } from "@/components/ui/card";
+import { HatchedBars, type HatchedBar } from "@/components/ui/hatched-bars";
 import { EMOTIONS, primaryIdsFrom } from "@/lib/data/emotions";
 import { dayKey } from "@/lib/data/prompts";
 import {
@@ -48,6 +49,15 @@ export function PulseCard({ pulse, entries, optedIn }: PulseCardProps) {
     0,
   );
 
+  const represented = EMOTIONS.filter((p) => pulse[p.id]);
+  const peak = Math.max(1, ...represented.map((p) => pulse[p.id] ?? 0));
+  const bars: HatchedBar[] = represented.map((p) => ({
+    value: (pulse[p.id] ?? 0) / peak,
+    color: p.color,
+    label: p.label.slice(0, 3),
+    solid: (pulse[p.id] ?? 0) === peak,
+  }));
+
   // The family behind the most recent check-in written today.
   const todaysPrimary = (() => {
     const today = dayKey();
@@ -74,46 +84,26 @@ export function PulseCard({ pulse, entries, optedIn }: PulseCardProps) {
 
   return (
     <Card className="space-y-4">
-      <div className="flex items-center gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-surface-sunken text-ink-muted">
-          <Users className="size-4.5" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1">
+      <div className="flex items-end justify-between gap-3">
+        <div className="min-w-0">
           <CardTitle>Today&apos;s pulse</CardTitle>
           <CardSubtitle>
             {total === 0
               ? "Nobody has checked in yet today"
-              : `${total} ${total === 1 ? "person has" : "people have"} shared how they feel`}
+              : `${total === 1 ? "person" : "people"} sharing how they feel`}
           </CardSubtitle>
         </div>
+        <p className="flex items-baseline gap-1">
+          <span className="stat text-4xl">{total}</span>
+          <Users className="size-4 text-ink-subtle" aria-hidden />
+        </p>
       </div>
 
       {total > 0 && (
         <>
-          <div
-            className="flex h-3 overflow-hidden rounded-full bg-surface-sunken"
-            role="img"
-            aria-label={EMOTIONS.filter((p) => pulse[p.id])
-              .map((p) => `${p.label} ${Math.round(((pulse[p.id] ?? 0) / total) * 100)}%`)
-              .join(", ")}
-          >
-            {EMOTIONS.map((primary) => {
-              const count = pulse[primary.id] ?? 0;
-              if (!count) return null;
-              return (
-                <span
-                  key={primary.id}
-                  style={{
-                    width: `${(count / total) * 100}%`,
-                    backgroundColor: primary.color,
-                  }}
-                />
-              );
-            })}
-          </div>
-
+          <HatchedBars bars={bars} height={128} />
           <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-            {EMOTIONS.filter((primary) => pulse[primary.id]).map((primary) => (
+            {represented.map((primary) => (
               <li key={primary.id} className="flex items-center gap-2">
                 <span
                   aria-hidden

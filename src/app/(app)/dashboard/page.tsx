@@ -6,9 +6,9 @@ import type { LucideIcon } from "lucide-react";
 
 import { AppHeader } from "@/components/layout/app-header";
 import { Aura } from "@/components/dashboard/aura";
+import { HeroCheckIn } from "@/components/dashboard/hero-check-in";
 import { JourneyTimeline } from "@/components/dashboard/journey-timeline";
 import { NudgeCard } from "@/components/dashboard/nudge-card";
-import { OrbCta } from "@/components/dashboard/orb-cta";
 import { PatternCard } from "@/components/dashboard/pattern-card";
 import { WeekWave } from "@/components/dashboard/week-wave";
 import { ChartSkeleton } from "@/components/ui/skeleton";
@@ -69,7 +69,7 @@ export default function DashboardPage() {
         </>
       ) : (
         <>
-          <OrbCta
+          <HeroCheckIn
             accent={family?.color ?? null}
             checkedInToday={checkedInToday}
             familyLabel={family?.label ?? null}
@@ -77,7 +77,7 @@ export default function DashboardPage() {
           />
 
           <div className="space-y-1.5 px-2 pt-1 pb-1 text-center">
-            <p className="font-display text-lg leading-snug text-balance text-ink italic">
+            <p className="font-quote text-lg leading-snug text-balance text-ink italic">
               {reflection.text}
             </p>
             {reflection.action && (
