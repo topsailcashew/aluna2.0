@@ -1,5 +1,4 @@
 import {
-  addDoc,
   collection,
   deleteDoc,
   doc,
@@ -10,9 +9,9 @@ import {
   orderBy,
   query,
   serverTimestamp,
-  setDoc,
   Timestamp,
-  updateDoc,
+  where,
+  writeBatch,
 } from "firebase/firestore";
 
 import { getDb } from "@/lib/firebase/config";
@@ -29,7 +28,6 @@ export type PulseCounts = Partial<Record<PrimaryEmotionId, number>>;
 
 const pulseRef = (day: string) => doc(getDb(), "communityPulse", day);
 
-/** Private marker so the client knows this person already contributed today. */
 const contributionRef = (uid: string, day: string) =>
   doc(getDb(), "users", uid, "contributions", day);
 
@@ -56,23 +54,23 @@ export async function hasContributedToday(
 /**
  * Adds one to a single emotion tally for the day.
  *
- * Security rules allow exactly one field to move, and only by +1, so a client
- * cannot rewrite the board. They cannot however prove that a given person has
- * not already counted today — that would need a server-side function, and the
- * rules engine cannot see a sibling write in the same batch. The private
- * marker below is what enforces once-a-day in practice; a determined user
- * could inflate a mood tally, which costs nobody anything.
+ * The tally write and the private contribution marker go in one batch, because
+ * the rules require the marker to appear in the same write and refuse a second
+ * one for the day. Once-a-day is therefore enforced server-side, not on trust
+ * — a client cannot inflate the board by writing the pulse alone.
  */
 export async function contributeToPulse(
   uid: string,
   primary: PrimaryEmotionId,
   day = dayKey(),
 ): Promise<void> {
-  await setDoc(pulseRef(day), { [primary]: increment(1) }, { merge: true });
-  await setDoc(contributionRef(uid, day), {
+  const batch = writeBatch(getDb());
+  batch.set(pulseRef(day), { [primary]: increment(1) }, { merge: true });
+  batch.set(contributionRef(uid, day), {
     primary,
     createdAt: serverTimestamp(),
   });
+  await batch.commit();
 }
 
 /* ------------------------------------------------------------------ */
@@ -85,14 +83,23 @@ export interface Reflection {
   primary: PrimaryEmotionId | null;
   createdAt: Date;
   resonateCount: number;
-  /** Present so someone can delete their own; never rendered. */
-  authorId: string;
 }
 
 const reflectionsRef = () => collection(getDb(), "reflections");
 
 const resonanceRef = (reflectionId: string, uid: string) =>
   doc(getDb(), "reflections", reflectionId, "resonances", uid);
+
+/**
+ * Who authored a post. Kept in a separate top-level collection that is
+ * readable only by the author, create-once and immutable (see firestore.rules)
+ * — so the public reflection carries no author id at all, and ownership cannot
+ * be forged after the fact to seize or delete someone else's post. Anonymity
+ * therefore holds against querying the raw documents, not just the UI.
+ */
+const authorRef = (reflectionId: string) =>
+  doc(getDb(), "reflectionAuthors", reflectionId);
+const reflectionAuthorsRef = () => collection(getDb(), "reflectionAuthors");
 
 export function subscribeToReflections(
   onData: (reflections: Reflection[]) => void,
@@ -112,7 +119,6 @@ export function subscribeToReflections(
             text: data.text ?? "",
             primary: data.primary ?? null,
             resonateCount: data.resonateCount ?? 0,
-            authorId: data.authorId ?? "",
             createdAt:
               data.createdAt instanceof Timestamp
                 ? data.createdAt.toDate()
@@ -125,22 +131,46 @@ export function subscribeToReflections(
   );
 }
 
+/** The ids of reflections this person authored, so the UI can mark them mine. */
+export function subscribeToMyReflectionIds(
+  uid: string,
+  onData: (ids: Set<string>) => void,
+  onError: (error: Error) => void,
+) {
+  // The read rule only returns author records whose authorId is the caller, so
+  // this query both works and reveals nobody else's authorship.
+  return onSnapshot(
+    query(reflectionAuthorsRef(), where("authorId", "==", uid)),
+    (snapshot) => onData(new Set(snapshot.docs.map((d) => d.id))),
+    (error) => onError(error),
+  );
+}
+
 export async function postReflection(
   uid: string,
   text: string,
   primary: PrimaryEmotionId | null,
 ): Promise<void> {
-  await addDoc(reflectionsRef(), {
+  // Client-generated id so the same id names the public post and the private
+  // ownership marker, both written in one batch.
+  const ref = doc(reflectionsRef());
+  const batch = writeBatch(getDb());
+  batch.set(ref, {
     text: text.trim(),
     primary,
-    authorId: uid,
     resonateCount: 0,
     createdAt: serverTimestamp(),
   });
+  // Author record written in the same batch; the create rule requires it.
+  batch.set(authorRef(ref.id), { authorId: uid });
+  await batch.commit();
 }
 
 export async function deleteReflection(id: string): Promise<void> {
-  await deleteDoc(doc(getDb(), "reflections", id));
+  const batch = writeBatch(getDb());
+  batch.delete(doc(getDb(), "reflections", id));
+  batch.delete(authorRef(id));
+  await batch.commit();
 }
 
 /** Which of the visible reflections this person has already acknowledged. */
@@ -149,8 +179,6 @@ export function subscribeToMyResonances(
   reflectionIds: string[],
   onData: (ids: Set<string>) => void,
 ) {
-  // One listener per reflection would be wasteful; a single read per id on
-  // demand is enough, since the set only changes when this user taps.
   let cancelled = false;
 
   void Promise.all(
@@ -164,8 +192,6 @@ export function subscribeToMyResonances(
         onData(new Set(results.filter((id): id is string => id !== null)));
       }
     })
-    // A failed lookup just means no hearts are lit; never an unhandled
-    // rejection in the console.
     .catch(() => {
       if (!cancelled) onData(new Set());
     });
@@ -175,22 +201,26 @@ export function subscribeToMyResonances(
   };
 }
 
+/**
+ * The count and the caller's own acknowledgement move together, in one batch.
+ * The rules require exactly that pairing — +1 only while creating your marker,
+ * -1 only while removing it — so one person can shift any post's count by at
+ * most their single vote. It cannot be inflated or griefed down.
+ */
 export async function toggleResonance(
   reflectionId: string,
   uid: string,
   on: boolean,
 ): Promise<void> {
+  const batch = writeBatch(getDb());
+  const parent = doc(getDb(), "reflections", reflectionId);
+
   if (on) {
-    await setDoc(resonanceRef(reflectionId, uid), {
-      createdAt: serverTimestamp(),
-    });
-    await updateDoc(doc(getDb(), "reflections", reflectionId), {
-      resonateCount: increment(1),
-    });
+    batch.set(resonanceRef(reflectionId, uid), { createdAt: serverTimestamp() });
+    batch.update(parent, { resonateCount: increment(1) });
   } else {
-    await deleteDoc(resonanceRef(reflectionId, uid));
-    await updateDoc(doc(getDb(), "reflections", reflectionId), {
-      resonateCount: increment(-1),
-    });
+    batch.delete(resonanceRef(reflectionId, uid));
+    batch.update(parent, { resonateCount: increment(-1) });
   }
+  await batch.commit();
 }

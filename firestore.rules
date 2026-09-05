@@ -39,9 +39,12 @@ service cloud.firestore {
       }
 
       // Private marker showing this person already added to a day's pulse.
+      // The pulse write is gated on this existing, so once-a-day is enforced
+      // server-side rather than on trust.
       match /contributions/{day} {
         allow read, write: if isOwner(userId);
       }
+
     }
 
     /* ---------------------------------------------------------------- */
@@ -54,23 +57,35 @@ service cloud.firestore {
     // in the same batch is invisible here — so once-a-day is enforced by the
     // client against the private marker above. Inflating a mood tally harms
     // nobody, and the alternative is a Cloud Function.
+    // One document per day, a tally per emotion family. Adding to it requires
+    // creating your own private contribution marker for that day in the SAME
+    // write, and not already having one — so a person can move the pulse by at
+    // most one, once a day, enforced by the rules rather than by trust.
     match /communityPulse/{day} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && isSingleTally(request.resource.data);
-      allow update: if isSignedIn() && isSingleIncrement();
+      allow create: if isSignedIn()
+                    && isSingleTally(request.resource.data)
+                    && claimsContribution(day);
+      allow update: if isSignedIn()
+                    && isSingleIncrement()
+                    && claimsContribution(day);
       allow delete: if false;
     }
 
+    // The wall. Posts carry NO author id — anonymity has to survive someone
+    // querying the raw documents, not just the UI hiding a field. Ownership
+    // lives in the author's private users/{uid}/reflections marker, written in
+    // the same batch as the post and consulted only for deletion.
     match /reflections/{reflectionId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
-                    && request.resource.data.authorId == request.auth.uid
-                    && isValidReflection(request.resource.data);
-      // Only the author can remove a post.
-      allow delete: if isSignedIn()
-                    && resource.data.authorId == request.auth.uid;
-      // The only permitted edit is the resonance tally moving by one.
-      allow update: if isSignedIn() && isResonanceChange();
+                    && isValidReflection(request.resource.data)
+                    && authoredHere(reflectionId);
+      // Deletable only by whoever the (immutable) author record names.
+      allow delete: if isSignedIn() && isAuthor(reflectionId);
+      // The only permitted edit is the resonance tally, and only in step with
+      // the caller's own acknowledgement — see isResonanceVote.
+      allow update: if isSignedIn() && isResonanceVote(reflectionId);
 
       // One acknowledgement per person, keyed by uid so it cannot be doubled.
       match /resonances/{userId} {
@@ -78,6 +93,18 @@ service cloud.firestore {
         allow create, delete: if isOwner(userId);
         allow update: if false;
       }
+    }
+
+    // Who authored each reflection. Readable ONLY by that author, so it deanon-
+    // ymises nothing; create-once and immutable, so it cannot be hijacked to
+    // seize a post. The public reflection carries no author id at all.
+    match /reflectionAuthors/{reflectionId} {
+      allow read: if isSignedIn() && resource.data.authorId == request.auth.uid;
+      allow create: if isSignedIn()
+                    && request.resource.data.keys().hasOnly(['authorId'])
+                    && request.resource.data.authorId == request.auth.uid;
+      allow update: if false;
+      allow delete: if isSignedIn() && resource.data.authorId == request.auth.uid;
     }
 
     // Anything not matched above is denied.
@@ -183,7 +210,7 @@ service cloud.firestore {
 
     function isValidReflection(data) {
       return data.keys().hasOnly([
-               'text', 'primary', 'authorId', 'resonateCount', 'createdAt'
+               'text', 'primary', 'resonateCount', 'createdAt'
              ])
              && data.text is string
              && data.text.size() > 0
@@ -193,6 +220,35 @@ service cloud.firestore {
              && data.createdAt == request.time;
     }
 
+    function authorDoc(reflectionId) {
+      return /databases/$(database)/documents/reflectionAuthors/$(reflectionId);
+    }
+
+    // On create: the author record must be written in the same batch and name
+    // the caller. On delete: the existing record must name the caller. Because
+    // that record is create-once and immutable, it cannot be forged after the
+    // fact to take over someone else's post.
+    function authoredHere(reflectionId) {
+      return existsAfter(authorDoc(reflectionId))
+             && getAfter(authorDoc(reflectionId)).data.authorId == request.auth.uid;
+    }
+
+    function isAuthor(reflectionId) {
+      return exists(authorDoc(reflectionId))
+             && get(authorDoc(reflectionId)).data.authorId == request.auth.uid;
+    }
+
+    function myContribution(day) {
+      return /databases/$(database)/documents/users/$(request.auth.uid)/contributions/$(day);
+    }
+
+    // Adding to the pulse must create this person's marker for the day, and
+    // they must not already have one. Bound to the same batch, so it cannot be
+    // faked by writing the pulse alone.
+    function claimsContribution(day) {
+      return existsAfter(myContribution(day)) && !exists(myContribution(day));
+    }
+
     // A brand-new day document may set a single family to exactly 1.
     function isSingleTally(data) {
       return data.keys().size() == 1
@@ -200,34 +256,46 @@ service cloud.firestore {
              && data[data.keys()[0]] == 1;
     }
 
-    // An existing day document may have exactly one family move up by one,
-    // and nothing else may change.
+    // Exactly one family moves up by exactly one. The previous version indexed
+    // affectedKeys().toList()[0] — a rules Set has no toList(), so the whole
+    // rule errored and EVERY increment was denied, legitimate ones included.
+    // Enumerating the seven families avoids indexing a Set at all.
     function isSingleIncrement() {
-      return request.resource.data.diff(resource.data)
-               .affectedKeys().size() == 1
-             && request.resource.data.diff(resource.data)
-                  .affectedKeys().hasOnly(families())
-             && changedTallyIsPlusOne();
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return changed.size() == 1
+             && changed.hasOnly(families())
+             && familyUpByOne(changed);
     }
 
-    function changedTallyIsPlusOne() {
-      return request.resource.data[
-               request.resource.data.diff(resource.data).affectedKeys().toList()[0]
-             ] ==
-             (resource.data.get(
-               request.resource.data.diff(resource.data).affectedKeys().toList()[0], 0
-             ) + 1);
+    function familyUpByOne(changed) {
+      let d = request.resource.data;
+      let p = resource.data;
+      return (changed.hasAny(['happy'])     && d.happy     == p.get('happy', 0) + 1)
+          || (changed.hasAny(['surprised']) && d.surprised == p.get('surprised', 0) + 1)
+          || (changed.hasAny(['bad'])       && d.bad       == p.get('bad', 0) + 1)
+          || (changed.hasAny(['fearful'])   && d.fearful   == p.get('fearful', 0) + 1)
+          || (changed.hasAny(['angry'])     && d.angry     == p.get('angry', 0) + 1)
+          || (changed.hasAny(['disgusted']) && d.disgusted == p.get('disgusted', 0) + 1)
+          || (changed.hasAny(['sad'])       && d.sad       == p.get('sad', 0) + 1);
     }
 
-    // Reflections are immutable apart from their acknowledgement tally, which
-    // may only ever move by one in either direction.
-    function isResonanceChange() {
+    // Reflections are immutable apart from the resonance tally, and it may only
+    // move in step with the caller's OWN acknowledgement marker: +1 while
+    // creating your marker, -1 while removing it. One person can therefore
+    // move any post's count by at most their single vote — no inflation, no
+    // griefing a count down.
+    function isResonanceVote(reflectionId) {
+      let marker = /databases/$(database)/documents/reflections/$(reflectionId)/resonances/$(request.auth.uid);
+      let before = resource.data.resonateCount;
+      let after = request.resource.data.resonateCount;
       return request.resource.data.diff(resource.data)
                .affectedKeys().hasOnly(['resonateCount'])
-             && request.resource.data.resonateCount is int
-             && request.resource.data.resonateCount >= 0
-             && (request.resource.data.resonateCount == resource.data.resonateCount + 1
-                 || request.resource.data.resonateCount == resource.data.resonateCount - 1);
+             && after is int
+             && after >= 0
+             && (
+               (after == before + 1 && existsAfter(marker) && !exists(marker))
+               || (after == before - 1 && !existsAfter(marker) && exists(marker))
+             );
     }
   }
 }

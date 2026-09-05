@@ -19,6 +19,7 @@ import {
   MAX_REFLECTION_LENGTH,
   deleteReflection,
   postReflection,
+  subscribeToMyReflectionIds,
   subscribeToMyResonances,
   toggleResonance,
   type Reflection,
@@ -37,6 +38,10 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
   const [resonated, setResonated] = useState<Set<string>>(new Set());
+  // Which posts are this person's own. Comes from their private ownership
+  // markers rather than an author id on the public post, which no longer
+  // exists — the wall is anonymous at the database, not just in the UI.
+  const [mineIds, setMineIds] = useState<Set<string>>(new Set());
 
   const prompt = useMemo(() => weeklyPrompt(), []);
   const ids = useMemo(() => reflections.map((r) => r.id), [reflections]);
@@ -45,6 +50,11 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
     if (!user || ids.length === 0) return;
     return subscribeToMyResonances(user.uid, ids, setResonated);
   }, [user, ids]);
+
+  useEffect(() => {
+    if (!user) return;
+    return subscribeToMyReflectionIds(user.uid, setMineIds, () => setMineIds(new Set()));
+  }, [user]);
 
   const post = async () => {
     if (!user) return;
@@ -164,7 +174,7 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
               const primary = reflection.primary
                 ? PRIMARY_BY_ID.get(reflection.primary)
                 : undefined;
-              const mine = reflection.authorId === user?.uid;
+              const mine = mineIds.has(reflection.id);
               const active = resonated.has(reflection.id);
 
               return (
