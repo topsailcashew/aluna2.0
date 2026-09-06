@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
+import { AlunaMark } from "@/components/brand/aluna-mark";
+
 /** Shared chrome for sign-in and sign-up: mark, headline, form, footer link. */
 export function AuthShell({
   title,
@@ -18,10 +20,10 @@ export function AuthShell({
       <div className="space-y-4">
         <Link
           href="/"
-          className="inline-grid size-12 place-items-center rounded-2xl bg-deep-700 text-xl font-black text-white"
+          className="inline-grid size-14 place-items-center rounded-2xl bg-surface shadow-card"
           aria-label="Aluna home"
         >
-          A
+          <AlunaMark size={38} />
         </Link>
         <div className="space-y-1.5">
           <h1 className="text-3xl font-display text-ink">

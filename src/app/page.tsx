@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+import { AlunaMark } from "@/components/brand/aluna-mark";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { SetupNotice } from "@/components/layout/setup-notice";
 
@@ -25,8 +26,8 @@ export default function RootPage() {
   return (
     <main className="grid min-h-dvh place-items-center px-6">
       <div className="splash-in flex flex-col items-center gap-5 text-center">
-        <span className="grid size-20 place-items-center rounded-[1.75rem] bg-deep-700 text-4xl font-black text-white shadow-lift">
-          A
+        <span className="grid size-20 place-items-center rounded-[1.75rem] bg-surface shadow-lift">
+          <AlunaMark size={52} />
         </span>
         <div className="space-y-1">
           <p className="text-2xl font-display text-ink">
