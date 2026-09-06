@@ -54,7 +54,7 @@ export function PulseCard({ pulse, entries, optedIn }: PulseCardProps) {
   const bars: HatchedBar[] = represented.map((p) => ({
     value: (pulse[p.id] ?? 0) / peak,
     color: p.color,
-    label: p.label.slice(0, 3),
+    label: p.label,
     solid: (pulse[p.id] ?? 0) === peak,
   }));
 

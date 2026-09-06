@@ -90,7 +90,7 @@ export const checkInSchema = z.object({
     .max(MAX_SENSATIONS, `Up to ${MAX_SENSATIONS} sensations per check-in`),
   emotions: z
     .array(z.string().refine((id) => EMOTION_LABEL_BY_ID.has(id)))
-    .min(1, "Choose at least one emotion to complete your check-in"),
+    .min(1, "Choose at least one specific feeling from the outer ring"),
   thoughtPatterns: z
     .array(z.string().refine((id) => THOUGHT_PATTERN_BY_ID.has(id))),
   thoughtNote: z

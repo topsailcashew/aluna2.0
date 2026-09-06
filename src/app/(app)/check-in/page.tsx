@@ -95,7 +95,9 @@ function CheckInFlow() {
 
   const goNext = () => {
     if (step === "emotions" && emotions.length === 0) {
-      toast.error("Choose at least one emotion before moving on");
+      toast.error(
+        "Nothing chosen yet — tap through to a word on the outer ring",
+      );
       return;
     }
     if (!isLast) goTo(index + 1);
@@ -234,7 +236,8 @@ function CheckInFlow() {
 
           {isLast && emotions.length === 0 && (
             <p className="text-center text-xs font-semibold text-[#d75046]">
-              Choose at least one emotion to save this check-in.
+              Tap through to a word on the outer ring — that is where a feeling
+              gets chosen.
             </p>
           )}
         </div>

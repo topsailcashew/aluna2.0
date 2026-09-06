@@ -144,9 +144,8 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
                     onHover={() => setHovered(emotion.id)}
                     onLeave={() => setHovered(null)}
                     onSelect={() => toggleEmotion(emotion.id)}
-                    ariaLabel={`${emotion.label}. ${isSelected ? "Selected" : "Not selected"}`}
+                    ariaLabel={`${emotion.label}. ${isSelected ? "Chosen" : "Not chosen"}`}
                     tick={isSelected}
-                    pressed={isSelected}
                   />
                 );
             })}
@@ -170,13 +169,12 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
                     labelColor={isActive ? "#ffffff" : primary.ink}
                     fontSize={11}
                     fontWeight={700}
-                    selected={isActive}
+                    open={isActive}
                     hovered={hovered === item.id}
                     onHover={() => setHovered(item.id)}
                     onLeave={() => setHovered(null)}
                     onSelect={() => setSubId(isActive ? null : item.id)}
-                    ariaLabel={`${item.label}, ${item.emotions.length} emotions${count ? `, ${count} selected` : ""}`}
-                    pressed={isActive}
+                    ariaLabel={`${item.label}, opens ${item.emotions.length} feelings${count ? `, ${count} chosen` : ""}`}
                   />
                 );
             })}
@@ -200,7 +198,7 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
                 labelColor="#ffffff"
                 fontSize={11}
                 fontWeight={700}
-                selected={isActive}
+                open={isActive}
                 dimmed={dimmed}
                 badge={count}
                 hovered={hovered === item.id}
@@ -210,8 +208,7 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
                   setPrimaryId(isActive ? null : item.id);
                   setSubId(null);
                 }}
-                ariaLabel={`${item.label}${count ? `, ${count} selected` : ""}`}
-                pressed={isActive}
+                ariaLabel={`${item.label} family, opens its shades${count ? `, ${count} chosen` : ""}`}
               />
             );
           })}
@@ -264,7 +261,7 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
 
       <p className="mt-3 text-center text-xs text-ink-muted" aria-live="polite">
         {level === 1 && "Tap a feeling family to open it"}
-        {level === 2 && "Choose the shade that fits closest"}
+        {level === 2 && "Open the shade that fits closest — still narrowing"}
         {level === 3 &&
           "Tap every one that rings true, then go back for another family"}
       </p>
@@ -296,13 +293,22 @@ interface WheelSliceProps {
   labelColor: string;
   fontSize: number;
   fontWeight: number;
+  /**
+   * A real choice. Only the level-3 rim can be selected, and only this state
+   * gets the white outline and the tick.
+   */
   selected?: boolean;
+  /**
+   * Disclosure state for the level-1 and level-2 rings, which navigate rather
+   * than choose. Deliberately quieter than `selected`: an opened wedge lifts
+   * and its siblings dim, but it never wears the outline of a chosen one.
+   */
+  open?: boolean;
   dimmed?: boolean;
   hovered?: boolean;
   badge?: number;
   /** Draws a tick beside the label — used for chosen level-3 emotions. */
   tick?: boolean;
-  pressed?: boolean;
   ariaLabel: string;
   onSelect: () => void;
   onHover: () => void;
@@ -318,11 +324,11 @@ function WheelSlice({
   fontSize,
   fontWeight,
   selected,
+  open,
   dimmed,
   hovered,
   badge,
   tick,
-  pressed,
   ariaLabel,
   onSelect,
   onHover,
@@ -340,7 +346,10 @@ function WheelSlice({
       role="button"
       tabIndex={0}
       aria-label={ariaLabel}
-      aria-pressed={pressed}
+      // A wedge that opens the next ring is a disclosure control, not a toggle,
+      // so it reports expanded rather than pressed.
+      aria-expanded={open}
+      aria-pressed={open === undefined ? selected : undefined}
       onClick={onSelect}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
@@ -364,7 +373,7 @@ function WheelSlice({
           // reference frame, not the path's own bounding box.
           transformBox: "view-box",
           transformOrigin: `${CENTER}px ${CENTER}px`,
-          transform: hovered || selected ? "scale(1.025)" : undefined,
+          transform: hovered || selected || open ? "scale(1.025)" : undefined,
         }}
       />
 
@@ -532,7 +541,7 @@ function CentreLabel({
             fontWeight={600}
             className="fill-ink-subtle"
           >
-            {sub ? `${sub.emotions.length} feelings` : `Level ${level}`}
+            {sub ? "Tap to choose" : "Pick a shade"}
           </text>
         </>
       )}

@@ -7,7 +7,7 @@ export interface HatchedBar {
   color: string;
   /** 0..1 height fraction. */
   value: number;
-  /** Short axis label under the bar. */
+  /** Axis label under the bar. Pass the real word — the chart does the fitting. */
   label: string;
   /** The one bar drawn solid rather than hatched — today, or the peak. */
   solid?: boolean;
@@ -25,6 +25,26 @@ interface HatchedBarsProps {
  * than a chart library so the texture and the single solid marker are exact,
  * and so it renders identically in a background tab (no rAF-driven animation).
  */
+/**
+ * Widest type size at which a label still fits its bar, clipping only once even
+ * the smallest size will not do. Callers used to pre-truncate to a fixed number
+ * of characters, which turned "Fearful" into "Fea" even on a chart with one bar
+ * and 320 units of room for it.
+ */
+function fitLabel(label: string, barW: number) {
+  // Rough advance width for the bold grotesque used here, in em.
+  const widthAt = (size: number) => label.length * size * 0.58;
+  for (const size of [10, 9, 8, 7.5]) {
+    if (widthAt(size) <= barW) return { size, text: label };
+  }
+  const size = 7.5;
+  const maxChars = Math.max(2, Math.floor(barW / (size * 0.58)));
+  return {
+    size,
+    text: label.length > maxChars ? `${label.slice(0, maxChars - 1)}\u2026` : label,
+  };
+}
+
 export function HatchedBars({ bars, height = 132, className }: HatchedBarsProps) {
   const uid = useId().replace(/[:]/g, "");
   const gap = 10;
@@ -69,6 +89,7 @@ export function HatchedBars({ bars, height = 132, className }: HatchedBarsProps)
         const h = Math.max(4, bar.value * trackH);
         const y = trackTop + (trackH - h);
         const r = Math.min(barW / 2, 10);
+        const label = fitLabel(bar.label, barW);
         return (
           <g key={i}>
             {/* faint full-height track keeps empty days from vanishing */}
@@ -97,9 +118,9 @@ export function HatchedBars({ bars, height = 132, className }: HatchedBarsProps)
               y={height - 4}
               textAnchor="middle"
               className="fill-ink-subtle"
-              style={{ fontSize: 10, fontWeight: 700 }}
+              style={{ fontSize: label.size, fontWeight: 700 }}
             >
-              {bar.label}
+              {label.text}
             </text>
           </g>
         );
