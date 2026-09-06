@@ -114,10 +114,13 @@ export const EMOTIONS: PrimaryEmotion[] = [
   {
     id: "fearful",
     label: "Fearful",
-    color: "#22867C",
-    tint: "#79BAB2",
-    wash: "#C0DED9",
-    ink: "#0E4A44",
+    // Indigo-violet. The old teal was the closest pair in the whole palette
+    // (to Angry), and it fought the deep-teal chrome. The cool side of the
+    // wheel is crowded, so this takes the gap between Angry and Disgusted.
+    color: "#5662B9",
+    tint: "#919EE0",
+    wash: "#CED6F7",
+    ink: "#323A71",
     subCategories: [
       sub("fearful", "Scared", ["Helpless", "Frightened"]),
       sub("fearful", "Anxious", ["Overwhelmed", "Worried"]),
