@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { CircleCheckBig, Compass, House, User, Users } from "lucide-react";
+import {
+  CircleCheckBig,
+  House,
+  LifeBuoy,
+  MessagesSquare,
+  User,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/dashboard", label: "Home", Icon: House },
   { href: "/check-in", label: "Check-in", Icon: CircleCheckBig },
-  { href: "/tools", label: "Tools", Icon: Compass },
-  { href: "/community", label: "Community", Icon: Users },
+  { href: "/tools", label: "Tools", Icon: LifeBuoy },
+  { href: "/community", label: "Community", Icon: MessagesSquare },
   { href: "/profile", label: "Profile", Icon: User },
 ] as const;
 
@@ -54,13 +60,13 @@ export function BottomNav() {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative grid size-12 place-items-center rounded-full transition-colors",
-                  active ? "text-[#12262c]" : "text-white/55 hover:text-white/85",
+                  active ? "text-white" : "text-white/45 hover:text-white/80",
                 )}
               >
                 {active && (
                   <motion.span
                     layoutId="nav-pill"
-                    className="absolute inset-0 -z-10 rounded-full bg-white"
+                    className="absolute inset-0 -z-10 rounded-full bg-white/15 ring-1 ring-white/15"
                     transition={{ type: "spring", stiffness: 380, damping: 32 }}
                   />
                 )}

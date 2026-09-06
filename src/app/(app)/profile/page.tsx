@@ -12,7 +12,6 @@ import {
   HelpCircle,
   LineChart,
   LogOut,
-  NotebookPen,
   Pencil,
   Settings,
 } from "lucide-react";
@@ -43,12 +42,6 @@ const LINKS: { href: string; label: string; detail: string; Icon: LucideIcon }[]
       label: "Insights",
       detail: "Trends, distribution and what stands out",
       Icon: LineChart,
-    },
-    {
-      href: "/journal",
-      label: "Journal",
-      detail: "A blank page, whenever you want one",
-      Icon: NotebookPen,
     },
     {
       href: "/history",

@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Mic, Save, Square, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Mic, Save, Square, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { BackHeader } from "@/components/layout/back-header";
@@ -11,17 +11,34 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { useAuth } from "@/lib/firebase/auth-context";
 import { useVault } from "@/lib/crypto/vault";
 import { createNote } from "@/lib/firebase/journal";
-import { cn } from "@/lib/utils";
+
+function clock(seconds: number) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 
 export default function RamblePage() {
   const { user } = useAuth();
   const { dataKey } = useVault();
   const router = useRouter();
-  const { supported, listening, finalText, interim, error, start, stop, reset, setText } =
+  const { supported, listening, finalText, error, start, stop, reset, setText } =
     useSpeechRecognition();
   const [saving, setSaving] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
 
   const hasText = finalText.trim().length > 0;
+
+  useEffect(() => {
+    if (!listening) return;
+    const id = setInterval(() => setElapsed((e) => e + 1), 1000);
+    return () => clearInterval(id);
+  }, [listening]);
+
+  const begin = () => {
+    setElapsed(0);
+    start();
+  };
 
   const save = async () => {
     if (!user || !dataKey) {
@@ -32,7 +49,6 @@ export default function RamblePage() {
       toast.error("Nothing to save yet.");
       return;
     }
-    if (listening) stop();
     setSaving(true);
     try {
       const title = `Ramble · ${new Date().toLocaleDateString(undefined, {
@@ -56,79 +72,74 @@ export default function RamblePage() {
         subtitle="Say it out loud — we write it down"
       />
 
-      {/* Mic */}
-      <div className="flex flex-col items-center gap-3 py-2">
-        <button
-          type="button"
-          onClick={listening ? stop : start}
-          disabled={!supported}
-          aria-label={listening ? "Stop" : "Start talking"}
-          aria-pressed={listening}
-          className={cn(
-            "relative grid size-24 place-items-center rounded-full text-white shadow-lift transition-transform active:scale-95 disabled:opacity-40",
-            listening ? "bg-[#d75046]" : "bg-[var(--color-deep-600)]",
-          )}
-        >
-          {listening && (
-            <span
-              aria-hidden
-              className="absolute inset-0 animate-ping rounded-full bg-[#d75046]/40"
-            />
-          )}
-          {listening ? (
-            <Square className="size-8" fill="currentColor" aria-hidden />
-          ) : (
-            <Mic className="size-9" aria-hidden />
-          )}
-        </button>
-        <p className="text-sm font-semibold text-ink-muted">
-          {!supported
-            ? "Speech isn't available here — you can still type below"
-            : listening
-              ? "Listening… tap to pause"
-              : hasText
-                ? "Tap to keep going"
-                : "Tap and start talking"}
-        </p>
-      </div>
-
       {error && (
         <p className="rounded-2xl bg-surface-sunken px-4 py-3 text-center text-xs font-semibold text-[#d75046]">
           {error}
         </p>
       )}
 
-      {/* Transcript — editable, with the live interim shown beneath. */}
-      <div className="space-y-1.5">
-        <textarea
-          value={finalText}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="Your words will appear here. You can edit them before saving."
-          className="min-h-[16rem] w-full resize-none rounded-3xl border border-line bg-surface px-4 py-4 text-sm leading-relaxed text-ink placeholder:text-ink-subtle focus:border-deep-400 focus:ring-2 focus:ring-deep-400/25 focus:outline-none"
-        />
-        {interim && (
-          <p className="px-1 text-sm leading-relaxed text-ink-subtle italic">
-            {interim}
-          </p>
-        )}
-      </div>
-
-      <div className="flex gap-2">
-        <Button onClick={save} loading={saving} size="lg" fullWidth disabled={!hasText}>
-          <Save className="size-4" aria-hidden />
-          Add to journal
-        </Button>
-        {hasText && (
-          <Button
-            onClick={reset}
-            size="lg"
-            variant="secondary"
-            aria-label="Clear"
+      {!hasText ? (
+        /* Idle — just the invitation to start. */
+        <div className="flex flex-col items-center gap-4 py-10">
+          <button
+            type="button"
+            onClick={begin}
+            disabled={!supported}
+            aria-label="Start talking"
+            className="grid size-28 place-items-center rounded-full bg-[var(--color-deep-600)] text-white shadow-lift transition-transform active:scale-95 disabled:opacity-40"
           >
-            <Trash2 className="size-4" aria-hidden />
-          </Button>
-        )}
-      </div>
+            <Mic className="size-10" aria-hidden />
+          </button>
+          <p className="max-w-[26ch] text-center text-sm font-semibold text-ink-muted">
+            {supported
+              ? "Tap and start talking. Nothing appears until you finish."
+              : "Speech isn't available on this browser — you can still type below."}
+          </p>
+          {!supported && (
+            <textarea
+              value={finalText}
+              onChange={(event) => setText(event.target.value)}
+              placeholder="Type whatever's on your mind…"
+              className="min-h-[14rem] w-full resize-none rounded-3xl border border-line bg-surface px-4 py-4 text-sm leading-relaxed text-ink placeholder:text-ink-subtle focus:border-deep-400 focus:ring-2 focus:ring-deep-400/25 focus:outline-none"
+            />
+          )}
+        </div>
+      ) : (
+        /* Review — the transcript, revealed only once you're done talking. */
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <p className="px-1 text-xs font-semibold text-ink-muted">
+              Here&apos;s what you said — edit anything before saving
+            </p>
+            <textarea
+              value={finalText}
+              onChange={(event) => setText(event.target.value)}
+              className="min-h-[18rem] w-full resize-none rounded-3xl border border-line bg-surface px-4 py-4 text-sm leading-relaxed text-ink focus:border-deep-400 focus:ring-2 focus:ring-deep-400/25 focus:outline-none"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            <Button onClick={save} loading={saving} size="lg" className="flex-1">
+              <Save className="size-4" aria-hidden />
+              Add to journal
+            </Button>
+            {supported && (
+              <Button onClick={begin} size="lg" variant="secondary">
+                <Mic className="size-4" aria-hidden />
+                Say more
+              </Button>
+            )}
+            <Button
+              onClick={reset}
+              size="lg"
+              variant="secondary"
+              aria-label="Clear"
+            >
+              <Trash2 className="size-4" aria-hidden />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <p className="px-1 text-xs leading-relaxed text-ink-subtle">
         Transcription is handled by your browser or phone, so those words pass
@@ -136,6 +147,46 @@ export default function RamblePage() {
         encryption. The note you save is encrypted like everything else, and the
         audio is never stored.
       </p>
+
+      {/* Recording — a full-screen focus with no words on screen. */}
+      {listening && (
+        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-10 bg-[var(--canvas)]/95 px-6 backdrop-blur-xl">
+          <div className="relative grid size-52 place-items-center">
+            <span
+              aria-hidden
+              className="absolute inset-0 animate-ping rounded-full bg-[#d75046]/20"
+            />
+            <span
+              aria-hidden
+              className="absolute inset-8 animate-ping rounded-full bg-[#d75046]/25"
+              style={{ animationDelay: "0.4s" }}
+            />
+            <span className="relative grid size-28 place-items-center rounded-full bg-[#d75046] text-white shadow-lift">
+              <Mic className="size-12" aria-hidden />
+            </span>
+          </div>
+
+          <div className="space-y-1 text-center">
+            <p className="stat text-4xl text-ink">{clock(elapsed)}</p>
+            <p className="text-sm text-ink-muted">
+              Listening… say what&apos;s on your mind.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={stop}
+            className="inline-flex items-center gap-2 rounded-full bg-[var(--marker)] px-8 py-4 text-base font-bold text-[var(--marker-ink)] shadow-lift transition-transform active:scale-95"
+          >
+            <Square className="size-4" fill="currentColor" aria-hidden />
+            Done
+          </button>
+          <p className="text-xs text-ink-subtle">
+            <Check className="mr-1 inline size-3" aria-hidden />
+            Your words appear when you finish
+          </p>
+        </div>
+      )}
     </div>
   );
 }

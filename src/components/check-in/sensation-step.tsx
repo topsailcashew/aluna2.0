@@ -99,76 +99,81 @@ export function SensationStep({ sensations, onChange }: SensationStepProps) {
         </p>
       </header>
 
-      <div className="grid grid-cols-[auto_1fr] items-start gap-4">
-        <div className="w-24 shrink-0 sm:w-32">
-          <BodyMap
-            activeRegion={region}
-            onRegionChange={(next) => {
-              setRegion(next);
-              selectPart(null);
-            }}
-            loggedRegions={loggedRegions}
-          />
-        </div>
+      {/* Compact body — a calm anchor and a map of what's already logged. */}
+      <div className="mx-auto w-20">
+        <BodyMap
+          activeRegion={region}
+          onRegionChange={(next) => {
+            setRegion(next);
+            selectPart(null);
+          }}
+          loggedRegions={loggedRegions}
+        />
+      </div>
 
-        <div className="space-y-3">
-          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            {REGION_ORDER.map((item) => (
+      {/* Area — every region visible, wrapping down the page, never sideways. */}
+      <div className="space-y-2">
+        <p className="px-1 text-xs font-semibold text-ink-muted">Pick an area</p>
+        <div className="flex flex-wrap gap-2">
+          {REGION_ORDER.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => {
+                setRegion(item);
+                selectPart(null);
+              }}
+              aria-pressed={region === item}
+              className={cn(
+                "rounded-full px-3.5 py-2 text-sm font-bold transition-colors",
+                region === item
+                  ? "bg-[var(--marker)] text-[var(--marker-ink)]"
+                  : "bg-surface-sunken text-ink-muted hover:text-ink",
+              )}
+            >
+              {BODY_REGION_LABELS[item]}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Where exactly — full width, wraps to new lines. */}
+      <div className="space-y-2">
+        <p className="px-1 text-xs font-semibold text-ink-muted">Where exactly?</p>
+        <div
+          role="radiogroup"
+          aria-label={`Body parts in ${BODY_REGION_LABELS[region]}`}
+          className="flex flex-wrap gap-2"
+        >
+          {partsInRegion.map((part) => {
+            const isSelected = bodyPart === part.id;
+            const alreadyLogged = sensations.some(
+              (s) => s.bodyPart === part.id,
+            );
+            return (
               <button
-                key={item}
+                key={part.id}
                 type="button"
-                onClick={() => {
-                  setRegion(item);
-                  selectPart(null);
-                }}
-                aria-pressed={region === item}
+                role="radio"
+                aria-checked={isSelected}
+                onClick={() => selectPart(isSelected ? null : part.id)}
                 className={cn(
-                  "shrink-0 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors",
-                  region === item
-                    ? "bg-deep-700 text-white"
-                    : "bg-surface-muted text-ink-muted hover:text-ink",
+                  "rounded-2xl border px-3.5 py-2 text-sm font-semibold transition-all",
+                  isSelected
+                    ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)] shadow-[0_8px_18px_-12px_rgb(16_68_82/0.9)]"
+                    : "border-line bg-surface text-ink hover:border-deep-300",
                 )}
               >
-                {BODY_REGION_LABELS[item]}
+                {part.label}
+                {alreadyLogged && !isSelected && (
+                  <span
+                    aria-hidden
+                    className="ml-1.5 inline-block size-1.5 rounded-full bg-happy align-middle"
+                  />
+                )}
               </button>
-            ))}
-          </div>
-
-          <div
-            role="radiogroup"
-            aria-label={`Body parts in ${BODY_REGION_LABELS[region]}`}
-            className="flex flex-wrap gap-2"
-          >
-            {partsInRegion.map((part) => {
-              const isSelected = bodyPart === part.id;
-              const alreadyLogged = sensations.some(
-                (s) => s.bodyPart === part.id,
-              );
-              return (
-                <button
-                  key={part.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={isSelected}
-                  onClick={() => selectPart(isSelected ? null : part.id)}
-                  className={cn(
-                    "rounded-2xl border px-3.5 py-2 text-sm font-semibold transition-all",
-                    isSelected
-                      ? "border-transparent bg-[var(--marker)] text-[var(--marker-ink)] shadow-[0_8px_18px_-12px_rgb(16_68_82/0.9)]"
-                      : "border-line bg-surface text-ink hover:border-deep-300",
-                  )}
-                >
-                  {part.label}
-                  {alreadyLogged && !isSelected && (
-                    <span
-                      aria-hidden
-                      className="ml-1.5 inline-block size-1.5 rounded-full bg-happy align-middle"
-                    />
-                  )}
-                </button>
-              );
-            })}
-          </div>
+            );
+          })}
         </div>
       </div>
 
