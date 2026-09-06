@@ -76,20 +76,32 @@ export default function DashboardPage() {
             streak={streak}
           />
 
-          <div className="space-y-1.5 px-2 pt-1 pb-1 text-center">
-            <p className="font-quote text-lg leading-snug text-balance text-ink italic">
-              {reflection.text}
-            </p>
-            {reflection.action && (
-              <Link
-                href={reflection.action.href}
-                className="inline-flex items-center gap-1 text-xs font-bold transition-opacity hover:opacity-75"
-                style={{ color: family?.color ?? "var(--color-deep-600)" }}
-              >
-                {reflection.action.label}
-                <ChevronRight className="size-3.5" aria-hidden />
-              </Link>
-            )}
+          <div className="card flex gap-3 bg-surface/70 p-4 backdrop-blur">
+            <span
+              aria-hidden
+              className="grid size-9 shrink-0 place-items-center rounded-2xl"
+              style={{
+                backgroundColor: `color-mix(in oklab, ${family?.color ?? "var(--color-deep-500)"} 16%, var(--surface))`,
+                color: family?.color ?? "var(--color-deep-600)",
+              }}
+            >
+              <Lightbulb className="size-4.5" />
+            </span>
+            <div className="min-w-0 flex-1 space-y-1">
+              <p className="text-sm leading-snug font-semibold text-ink">
+                {reflection.text}
+              </p>
+              {reflection.action && (
+                <Link
+                  href={reflection.action.href}
+                  className="inline-flex items-center gap-1 text-xs font-bold transition-opacity hover:opacity-75"
+                  style={{ color: family?.color ?? "var(--color-deep-600)" }}
+                >
+                  {reflection.action.label}
+                  <ChevronRight className="size-3.5" aria-hidden />
+                </Link>
+              )}
+            </div>
           </div>
 
           {!checkedInToday && profile.reminderHour !== null && (

@@ -2,10 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { CSSProperties } from "react";
-import { Heart, MessageCircleHeart, Send, Trash2 } from "lucide-react";
+import { Heart, MessageCircleHeart, Pencil, Send, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
-import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -37,10 +36,10 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
   const { user } = useAuth();
   const [draft, setDraft] = useState("");
   const [posting, setPosting] = useState(false);
+  const [composerOpen, setComposerOpen] = useState(false);
   const [resonated, setResonated] = useState<Set<string>>(new Set());
-  // Which posts are this person's own. Comes from their private ownership
-  // markers rather than an author id on the public post, which no longer
-  // exists — the wall is anonymous at the database, not just in the UI.
+  // Which posts are this person's own — from their private ownership markers,
+  // not an author id on the public post (the wall is anonymous at the database).
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
 
   const prompt = useMemo(() => weeklyPrompt(), []);
@@ -53,7 +52,9 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
 
   useEffect(() => {
     if (!user) return;
-    return subscribeToMyReflectionIds(user.uid, setMineIds, () => setMineIds(new Set()));
+    return subscribeToMyReflectionIds(user.uid, setMineIds, () =>
+      setMineIds(new Set()),
+    );
   }, [user]);
 
   const post = async () => {
@@ -66,11 +67,13 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
       // Tags the post with the family behind the poster's latest check-in, so
       // the card can carry a colour without naming a specific feeling.
       const latest = entries[0] ? primaryIdsFrom(entries[0].emotions)[0] : undefined;
-      const tag = latest && PRIMARY_BY_ID.has(latest as PrimaryEmotionId)
-        ? (latest as PrimaryEmotionId)
-        : null;
+      const tag =
+        latest && PRIMARY_BY_ID.has(latest as PrimaryEmotionId)
+          ? (latest as PrimaryEmotionId)
+          : null;
       await postReflection(user.uid, text, tag);
       setDraft("");
+      setComposerOpen(false);
       toast.success("Shared anonymously");
     } catch {
       toast.error("Could not share that just now.");
@@ -83,7 +86,6 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
     if (!user) return;
     const on = !resonated.has(reflection.id);
 
-    // Optimistic: the tap should feel instant, and a failure just flips back.
     setResonated((previous) => {
       const next = new Set(previous);
       if (on) next.add(reflection.id);
@@ -114,46 +116,11 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
   };
 
   return (
-    <div className="space-y-4">
-      <Card className="space-y-3">
-        <div className="space-y-1">
-          <p className="text-xs font-bold text-deep-500 dark:text-deep-300">
-            This week&apos;s prompt
-          </p>
-          <p className="text-base leading-snug font-extrabold text-ink">
-            {prompt}
-          </p>
-        </div>
-
-        <Textarea
-          label="Share a line"
-          optional
-          maxLength={MAX_REFLECTION_LENGTH}
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          placeholder="Something true, in as few words as you like…"
-        />
-
-        <Button
-          onClick={post}
-          loading={posting}
-          disabled={!draft.trim()}
-          fullWidth
-        >
-          <Send className="size-4" aria-hidden />
-          Share anonymously
-        </Button>
-
-        <p className="text-xs leading-relaxed text-ink-subtle">
-          Posts show no name and no avatar. Your account id is stored with the
-          post so you can delete it later — nobody else ever sees it.
-        </p>
-      </Card>
-
+    <>
       <section aria-labelledby="wall-heading" className="space-y-3">
         <div className="flex items-baseline justify-between px-1">
-          <h2 id="wall-heading" className="text-base font-extrabold text-ink">
-            Reflections
+          <h2 id="wall-heading" className="font-display text-lg text-ink">
+            What people are sharing
           </h2>
           <span className="text-xs font-semibold text-ink-subtle">
             {reflections.length === 0 ? "" : `${reflections.length} shared`}
@@ -161,17 +128,14 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
         </div>
 
         {reflections.length === 0 ? (
-          <Card>
+          <div className="card p-6">
             <EmptyState
               icon={MessageCircleHeart}
               title="Nothing shared yet"
-              description="Be the first. A single honest sentence is plenty — this is not a place for performance."
+              description="Be the first — one honest line is plenty."
             />
-          </Card>
+          </div>
         ) : (
-          /* A timeline: one vertical rail, a mood-coloured node per post, and
-             the card to its right. The newest sits at the live end of the rail,
-             lifted and tinted; the rest recede into a flat wash. */
           <ol className="relative space-y-3">
             <span
               aria-hidden
@@ -192,7 +156,6 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
                   className="relative pl-7"
                   style={{ "--tone": tone } as CSSProperties}
                 >
-                  {/* Node on the rail. The white ring lifts it off the line. */}
                   <span
                     aria-hidden
                     className="absolute top-3.5 left-0 grid w-[15px] place-items-center"
@@ -282,6 +245,71 @@ export function ReflectionWall({ reflections, entries }: ReflectionWallProps) {
           </ol>
         )}
       </section>
-    </div>
+
+      {/* Action bubble — the one way to add to the wall. */}
+      <button
+        type="button"
+        onClick={() => setComposerOpen(true)}
+        className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+5.2rem)] z-30 inline-flex items-center gap-2 rounded-full bg-[var(--marker)] px-5 py-3.5 text-sm font-bold text-[var(--marker-ink)] shadow-lift transition-transform active:scale-95"
+      >
+        <Pencil className="size-4" aria-hidden />
+        Share a line
+      </button>
+
+      {composerOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Share a reflection"
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            onClick={() => setComposerOpen(false)}
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+          />
+          <div className="relative w-full max-w-lg space-y-3 rounded-t-[2rem] border border-line bg-surface p-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] shadow-lift">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-0.5">
+                <p className="text-xs font-bold text-deep-500 dark:text-deep-300">
+                  This week&apos;s prompt
+                </p>
+                <p className="text-base leading-snug font-extrabold text-ink">
+                  {prompt}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setComposerOpen(false)}
+                aria-label="Close"
+                className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-sunken text-ink-muted transition-colors hover:text-ink"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            </div>
+
+            <Textarea
+              label="Share a line"
+              optional
+              autoFocus
+              maxLength={MAX_REFLECTION_LENGTH}
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              placeholder="Something true, in as few words as you like…"
+            />
+
+            <Button onClick={post} loading={posting} disabled={!draft.trim()} fullWidth>
+              <Send className="size-4" aria-hidden />
+              Share anonymously
+            </Button>
+
+            <p className="text-xs leading-relaxed text-ink-subtle">
+              No name, no avatar. Only you can delete it later.
+            </p>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

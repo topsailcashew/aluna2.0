@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { motion } from "framer-motion";
 import { ChevronLeft } from "lucide-react";
 
 import {
@@ -27,6 +28,17 @@ const RING = {
 
 const midRadius = (ring: { inner: number; outer: number }) =>
   (ring.inner + ring.outer) / 2;
+
+/** Spring pop for a ring as it drills in — scales up from the wheel's centre. */
+const ringMotion = {
+  initial: { opacity: 0, scale: 0.84 },
+  animate: { opacity: 1, scale: 1 },
+  transition: { type: "spring" as const, stiffness: 260, damping: 22 },
+  style: {
+    transformBox: "view-box" as const,
+    transformOrigin: `${CENTER}px ${CENTER}px`,
+  },
+};
 
 interface EmotionWheelProps {
   /** Selected level-3 emotion ids. */
@@ -113,7 +125,7 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
 
         {/* Ring 3 — specific emotions */}
         {sub && primary && (
-          <g key={sub.id} className="ring-enter">
+          <motion.g key={sub.id} {...ringMotion}>
               {sub.emotions.map((emotion, index) => {
                 const slice = specificSlices[index];
                 const isSelected = selected.has(emotion.id);
@@ -138,12 +150,12 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
                   />
                 );
             })}
-          </g>
+          </motion.g>
         )}
 
         {/* Ring 2 — sub-categories */}
         {primary && (
-          <g key={primary.id} className="ring-enter">
+          <motion.g key={primary.id} {...ringMotion}>
               {primary.subCategories.map((item, index) => {
                 const slice = subSlices[index];
                 const isActive = item.id === subId;
@@ -168,7 +180,7 @@ export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
                   />
                 );
             })}
-          </g>
+          </motion.g>
         )}
 
         {/* Ring 1 — primary categories */}

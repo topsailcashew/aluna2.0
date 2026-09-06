@@ -55,7 +55,7 @@ export function BodyMap({
   return (
     <svg
       viewBox="0 0 160 380"
-      className="mx-auto block h-full max-h-96 w-full"
+      className="mx-auto block h-auto w-full"
       role="group"
       aria-label="Body regions"
     >

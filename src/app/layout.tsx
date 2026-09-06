@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Fraunces, Hanken_Grotesk } from "next/font/google";
+import { Bricolage_Grotesque, Hanken_Grotesk } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/lib/firebase/auth-context";
@@ -22,15 +22,6 @@ const bricolage = Bricolage_Grotesque({
   subsets: ["latin"],
   variable: "--font-bricolage",
   display: "swap",
-});
-
-// Kept for one job only: the reflection line on the home screen. A soft serif
-// used as a single editorial accent among the grotesque.
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  variable: "--font-fraunces",
-  display: "swap",
-  axes: ["SOFT", "opsz"],
 });
 
 export const metadata: Metadata = {
@@ -64,7 +55,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${hanken.variable} ${bricolage.variable} ${fraunces.variable} antialiased`}>
+      <body className={`${hanken.variable} ${bricolage.variable} antialiased`}>
         <ThemeProvider nonce={nonce}>
           <AuthProvider>
             <VaultProvider>{children}</VaultProvider>

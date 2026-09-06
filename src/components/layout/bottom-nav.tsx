@@ -3,17 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { CircleCheckBig, House, User, Users, Wind } from "lucide-react";
+import { CircleCheckBig, Compass, House, User, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 const TABS = [
   { href: "/dashboard", label: "Home", Icon: House },
   { href: "/check-in", label: "Check-in", Icon: CircleCheckBig },
-  { href: "/breathe", label: "Breathe", Icon: Wind },
+  { href: "/tools", label: "Tools", Icon: Compass },
   { href: "/community", label: "Community", Icon: Users },
   { href: "/profile", label: "Profile", Icon: User },
 ] as const;
+
+/** Everything the Tools hub gathers — the Tools tab stays lit across them. */
+const TOOLS_ROUTES = ["/tools", "/breathe", "/ramble", "/journey", "/journal"];
 
 /**
  * Floating dark pill, per the reference. Sits off the bottom edge, icons only,
@@ -24,9 +27,11 @@ const TABS = [
 export function BottomNav() {
   const pathname = usePathname();
 
-  // The check-in is a focused, multi-step flow with its own back control and a
-  // fixed Continue bar — the tab bar only competes with it, so it steps aside.
-  if (pathname.startsWith("/check-in")) return null;
+  // Focused, multi-step flows carry their own back control and fixed action
+  // bar — the tab bar only competes with them, so it steps aside.
+  if (pathname.startsWith("/check-in") || pathname.startsWith("/journey")) {
+    return null;
+  }
 
   return (
     <nav
@@ -35,7 +40,12 @@ export function BottomNav() {
     >
       <ul className="pointer-events-auto flex items-center gap-1 rounded-full border border-white/10 bg-[#12262c] px-2 py-2 shadow-lift dark:bg-[#1a2c33]">
         {TABS.map(({ href, label, Icon }) => {
-          const active = pathname === href || pathname.startsWith(`${href}/`);
+          const active =
+            href === "/tools"
+              ? TOOLS_ROUTES.some(
+                  (r) => pathname === r || pathname.startsWith(`${r}/`),
+                )
+              : pathname === href || pathname.startsWith(`${href}/`);
           return (
             <li key={href}>
               <Link

@@ -14,7 +14,6 @@
 
 @theme {
   --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
 
   /* Aluna's deep teal — buttons, active nav, headings on light surfaces. */
   --color-deep-50: #eef6f7;
@@ -163,14 +162,6 @@
     line-height: 1;
   }
 
-  /* Fraunces, kept for a single editorial accent (the reflection line). */
-  .font-quote {
-    font-family: var(--font-fraunces), Georgia, serif;
-    font-optical-sizing: auto;
-    font-variation-settings: "SOFT" 60, "opsz" 40;
-    letter-spacing: -0.01em;
-  }
-
   .card {
     background-color: var(--surface);
     border-radius: var(--radius-4xl);
@@ -250,6 +241,28 @@
   }
   .splash-in {
     animation: splash-in 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* The ripple loader: identical rings expand outward from the centre on a
+     loop, staggered, for a calm pulse. No fill-mode, so under reduced motion
+     (which caps iterations to 1) they settle as the static mark. */
+  @keyframes aluna-ripple {
+    0% {
+      opacity: 0;
+      transform: scale(0.18);
+    }
+    55% {
+      opacity: 0.65;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(1);
+    }
+  }
+  .aluna-ripple circle {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: aluna-ripple 1.65s cubic-bezier(0.22, 1, 0.36, 1) infinite;
   }
 
   /* Ring reveal on the emotion wheel. Like .step-enter it carries no

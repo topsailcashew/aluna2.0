@@ -5,13 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X } from "lucide-react";
 
 import { EmotionWheel } from "@/components/check-in/emotion-wheel";
-import {
-  EMOTIONS,
-  labelOf,
-  primaryOf,
-  subOf,
-  TOTAL_EMOTIONS,
-} from "@/lib/data/emotions";
+import { EMOTIONS, labelOf, primaryOf, subOf } from "@/lib/data/emotions";
 
 interface EmotionStepProps {
   emotions: string[];
@@ -26,9 +20,8 @@ export function EmotionStep({ emotions, onChange }: EmotionStepProps) {
           Name what you are feeling
         </h2>
         <p className="text-sm text-ink-muted">
-          Start broad, then narrow. {TOTAL_EMOTIONS} words across three levels —
-          the precise one often lands differently than the obvious one. Pick as
-          many as you need; feeling two contradictory things at once is normal.
+          Start broad, then narrow. Pick as many as fit — two opposite feelings
+          at once is normal.
         </p>
       </header>
 

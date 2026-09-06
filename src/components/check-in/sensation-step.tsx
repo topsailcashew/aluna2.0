@@ -94,13 +94,13 @@ export function SensationStep({ sensations, onChange }: SensationStepProps) {
           Where does your body speak?
         </h2>
         <p className="text-sm text-ink-muted">
-          Scan slowly. Note anything with a texture to it — tightness, warmth,
-          buzzing, heaviness. There is no wrong answer, and skipping is fine.
+          Anywhere holding something — tightness, warmth, a buzz. Skipping is
+          fine.
         </p>
       </header>
 
-      <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
-        <div className="mx-auto w-40 shrink-0 sm:w-36">
+      <div className="grid grid-cols-[auto_1fr] items-start gap-4">
+        <div className="w-24 shrink-0 sm:w-32">
           <BodyMap
             activeRegion={region}
             onRegionChange={(next) => {

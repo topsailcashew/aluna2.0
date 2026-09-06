@@ -21,8 +21,7 @@ export default function CommunityPage() {
           You are not the only one
         </h1>
         <p className="text-sm text-ink-muted">
-          No profiles, no followers, no replies. Just a sense of how everyone
-          else is doing, and a wall of things people felt like saying.
+          No profiles, no followers. Just how others are doing.
         </p>
       </header>
 
@@ -40,12 +39,12 @@ export default function CommunityPage() {
         </>
       ) : (
         <>
+          <ReflectionWall reflections={reflections} entries={entries} />
           <PulseCard
             pulse={pulse}
             entries={entries}
             optedIn={profile.shareToCommunity}
           />
-          <ReflectionWall reflections={reflections} entries={entries} />
         </>
       )}
     </div>

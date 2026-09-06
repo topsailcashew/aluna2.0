@@ -2,9 +2,10 @@
 
 import { useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
 
 import { usePathname } from "next/navigation";
+
+import { RippleLoader } from "@/components/brand/ripple-loader";
 
 import { useProfile } from "@/hooks/use-profile";
 import { useAuth } from "@/lib/firebase/auth-context";
@@ -45,10 +46,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (loading || !user) {
     return (
       <div className="grid min-h-dvh place-items-center">
-        <div className="flex flex-col items-center gap-3 text-ink-subtle">
-          <Loader2 className="size-6 animate-spin" aria-hidden />
-          <p className="text-sm font-semibold">Opening your space…</p>
-        </div>
+        <RippleLoader label="Opening your space…" />
       </div>
     );
   }
@@ -58,10 +56,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (status === "loading") {
     return (
       <div className="grid min-h-dvh place-items-center">
-        <div className="flex flex-col items-center gap-3 text-ink-subtle">
-          <Loader2 className="size-6 animate-spin" aria-hidden />
-          <p className="text-sm font-semibold">Unlocking your space…</p>
-        </div>
+        <RippleLoader label="Unlocking your space…" />
       </div>
     );
   }
