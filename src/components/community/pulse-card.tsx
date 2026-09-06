@@ -101,7 +101,11 @@ export function PulseCard({ pulse, entries, optedIn }: PulseCardProps) {
 
       {total > 0 && (
         <>
-          <HatchedBars bars={bars} height={128} />
+          <HatchedBars
+            bars={bars}
+            height={128}
+            legend={{ solid: "most felt today", hatched: "other families" }}
+          />
           <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5">
             {represented.map((primary) => (
               <li key={primary.id} className="flex items-center gap-2">
@@ -152,8 +156,8 @@ export function PulseCard({ pulse, entries, optedIn }: PulseCardProps) {
             }}
           >
             {busy && <Loader2 className="size-4 animate-spin" aria-hidden />}
-            Add today&apos;s{" "}
-            {EMOTIONS.find((p) => p.id === todaysPrimary)?.label.toLowerCase()}
+            Add {EMOTIONS.find((p) => p.id === todaysPrimary)?.label} to the
+            count
           </button>
         )}
       </div>

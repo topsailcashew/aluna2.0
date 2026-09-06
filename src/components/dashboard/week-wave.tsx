@@ -57,7 +57,15 @@ export function WeekWave({
         <p className="text-sm font-bold text-ink">Your week</p>
         <p className="text-xs text-ink-subtle">{logged} of 7 days logged</p>
       </div>
-      <HatchedBars bars={bars} height={124} />
+      <HatchedBars
+        bars={bars}
+        height={124}
+        legend={{
+          solid: "today",
+          hatched: "days you logged",
+          empty: "no check-in",
+        }}
+      />
     </Card>
   );
 }

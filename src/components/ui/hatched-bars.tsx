@@ -13,10 +13,24 @@ export interface HatchedBar {
   solid?: boolean;
 }
 
+/**
+ * What this chart's fills mean. "Solid" carries a different meaning in every
+ * chart that uses this component — today, the latest check-in, the most-felt
+ * family — so the words have to come from the caller rather than be guessed
+ * here. Omit it and no key is drawn.
+ */
+export interface HatchedBarsLegend {
+  solid: string;
+  hatched: string;
+  /** Only for charts with empty slots, like a week with unlogged days. */
+  empty?: string;
+}
+
 interface HatchedBarsProps {
   bars: HatchedBar[];
   height?: number;
   className?: string;
+  legend?: HatchedBarsLegend;
 }
 
 /**
@@ -45,7 +59,12 @@ function fitLabel(label: string, barW: number) {
   };
 }
 
-export function HatchedBars({ bars, height = 132, className }: HatchedBarsProps) {
+export function HatchedBars({
+  bars,
+  height = 132,
+  className,
+  legend,
+}: HatchedBarsProps) {
   const uid = useId().replace(/[:]/g, "");
   const gap = 10;
   const n = Math.max(bars.length, 1);
@@ -55,6 +74,7 @@ export function HatchedBars({ bars, height = 132, className }: HatchedBarsProps)
   const trackH = height - 22;
 
   return (
+    <div className="space-y-2">
     <svg
       viewBox={`0 0 ${width} ${height}`}
       className={className}
@@ -126,5 +146,45 @@ export function HatchedBars({ bars, height = 132, className }: HatchedBarsProps)
         );
       })}
     </svg>
+
+      {legend && (
+        <ul className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[11px] text-ink-subtle">
+          <LegendKey swatch="solid" label={legend.solid} />
+          <LegendKey swatch="hatched" label={legend.hatched} />
+          {legend.empty && <LegendKey swatch="empty" label={legend.empty} />}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+/** One swatch and its meaning. The swatches echo the bar fills exactly. */
+function LegendKey({
+  swatch,
+  label,
+}: {
+  swatch: "solid" | "hatched" | "empty";
+  label: string;
+}) {
+  return (
+    <li className="flex items-center gap-1.5">
+      <span
+        aria-hidden
+        className="size-2.5 shrink-0 rounded-[3px]"
+        style={
+          swatch === "solid"
+            ? { background: "var(--marker)" }
+            : swatch === "empty"
+              ? { background: "var(--surface-sunken)" }
+              : {
+                  // Mirrors the 45-degree SVG pattern the bars are filled with.
+                  backgroundImage:
+                    "repeating-linear-gradient(45deg, currentColor 0 1.2px, transparent 1.2px 4px)",
+                  opacity: 0.55,
+                }
+        }
+      />
+      {label}
+    </li>
   );
 }

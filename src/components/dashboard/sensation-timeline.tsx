@@ -7,7 +7,8 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { HatchedBars, type HatchedBar } from "@/components/ui/hatched-bars";
 import { intensityTimeline } from "@/lib/analytics";
 import type { CheckInEntry } from "@/lib/types";
-import { formatShortDate } from "@/lib/utils";
+import { dayKey } from "@/lib/data/prompts";
+import { formatShortDate, formatShortTime } from "@/lib/utils";
 
 const ACCENT = "var(--color-fearful)";
 
@@ -19,12 +20,25 @@ export function SensationTimeline({ entries }: { entries: CheckInEntry[] }) {
   const data = intensityTimeline(entries).slice(-10);
   const latest = data[data.length - 1];
 
-  const bars: HatchedBar[] = data.map((point, i) => ({
-    value: point.intensity / 10,
-    color: ACCENT,
-    label: formatShortDate(new Date(point.timestamp)),
-    solid: i === data.length - 1,
-  }));
+  // Two check-ins on one day would otherwise be two bars both reading "Sep 6",
+  // with nothing to say which is which. A repeated day switches to the hour it
+  // was logged; days that appear once keep the friendlier date.
+  const perDay = new Map<string, number>();
+  for (const point of data) {
+    const key = dayKey(new Date(point.timestamp));
+    perDay.set(key, (perDay.get(key) ?? 0) + 1);
+  }
+
+  const bars: HatchedBar[] = data.map((point, i) => {
+    const when = new Date(point.timestamp);
+    const repeated = (perDay.get(dayKey(when)) ?? 0) > 1;
+    return {
+      value: point.intensity / 10,
+      color: ACCENT,
+      label: repeated ? formatShortTime(when) : formatShortDate(when),
+      solid: i === data.length - 1,
+    };
+  });
 
   return (
     <Card className="space-y-4">
@@ -48,7 +62,11 @@ export function SensationTimeline({ entries }: { entries: CheckInEntry[] }) {
           description="Log sensations in two check-ins and the bars will start to tell you something."
         />
       ) : (
-        <HatchedBars bars={bars} height={150} />
+        <HatchedBars
+          bars={bars}
+          height={150}
+          legend={{ solid: "latest check-in", hatched: "earlier ones" }}
+        />
       )}
     </Card>
   );

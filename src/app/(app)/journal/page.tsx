@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from "react";
-import { NotebookPen, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useState, useSyncExternalStore } from "react";
+import Link from "next/link";
+import {
+  Eye,
+  EyeOff,
+  LifeBuoy,
+  NotebookPen,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { BackHeader } from "@/components/layout/back-header";
@@ -32,6 +42,21 @@ export default function JournalPage() {
   const [editing, setEditing] = useState<Editing>(null);
   const [saving, setSaving] = useState(false);
   const [reading, setReading] = useState<JournalNote | null>(null);
+
+  /**
+   * Previews stay off until asked for. A journal invites the kind of writing
+   * you would not want legible to someone glancing over your shoulder, and the
+   * list is the one screen where several entries are on show at once.
+   *
+   * Read through useSyncExternalStore rather than an effect: this route is
+   * server-rendered, so the first client render has to agree with the server's
+   * (previews off) before localStorage gets a say.
+   */
+  const showPreviews = useSyncExternalStore(
+    subscribePreviews,
+    readPreviews,
+    () => false,
+  );
 
   const save = async () => {
     if (!user || !dataKey || !editing) return;
@@ -122,6 +147,8 @@ export default function JournalPage() {
           <p className="text-right text-xs text-ink-subtle tabular-nums">
             {editing.body.length} characters
           </p>
+
+          <SupportLink />
         </div>
 
         <div className="fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+4.9rem)] z-30 px-4">
@@ -217,6 +244,27 @@ export default function JournalPage() {
         New note
       </Button>
 
+      {!loading && notes.length > 0 && (
+        <div className="flex items-center justify-between gap-3 px-1">
+          <p className="text-xs font-semibold text-ink-subtle">
+            {notes.length} {notes.length === 1 ? "note" : "notes"}
+          </p>
+          <button
+            type="button"
+            onClick={() => writePreviews(!showPreviews)}
+            aria-pressed={showPreviews}
+            className="flex items-center gap-1.5 text-xs font-bold text-ink-muted transition-colors hover:text-ink"
+          >
+            {showPreviews ? (
+              <EyeOff className="size-3.5" aria-hidden />
+            ) : (
+              <Eye className="size-3.5" aria-hidden />
+            )}
+            {showPreviews ? "Hide previews" : "Show previews"}
+          </button>
+        </div>
+      )}
+
       {loading ? (
         <ChartSkeleton height={160} />
       ) : notes.length === 0 ? (
@@ -242,11 +290,22 @@ export default function JournalPage() {
                     ? "Locked note"
                     : note.title || "Untitled"}
                 </p>
-                <p className="line-clamp-2 text-xs leading-relaxed text-ink-muted">
-                  {note.undecryptable
-                    ? "This note could not be opened with your current key."
-                    : note.body}
-                </p>
+                {note.undecryptable ? (
+                  <p className="line-clamp-2 text-xs leading-relaxed text-ink-muted">
+                    This note could not be opened with your current key.
+                  </p>
+                ) : showPreviews ? (
+                  <p className="line-clamp-2 text-xs leading-relaxed text-ink-muted">
+                    {note.body}
+                  </p>
+                ) : (
+                  // Length keeps untitled notes tellable apart without putting
+                  // a word of their contents on screen.
+                  <p className="text-xs text-ink-subtle">
+                    {wordCount(note.body)}{" "}
+                    {wordCount(note.body) === 1 ? "word" : "words"}
+                  </p>
+                )}
                 <p className="text-[11px] text-ink-subtle">
                   {relativeTime(note.createdAt)}
                   {note.updatedAt && " · edited"}
@@ -256,6 +315,66 @@ export default function JournalPage() {
           ))}
         </ul>
       )}
+
+      <SupportLink />
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * Per-device preference, kept outside React because the `storage` event does
+ * not fire in the tab that wrote the value — so the toggle has to notify its
+ * own subscribers to re-render.
+ */
+const PREVIEW_KEY = "aluna.journal.previews";
+const previewListeners = new Set<() => void>();
+
+function readPreviews() {
+  try {
+    return localStorage.getItem(PREVIEW_KEY) === "on";
+  } catch {
+    // Private windows and blocked site data both land here; off is the safer
+    // default anyway.
+    return false;
+  }
+}
+
+function subscribePreviews(onChange: () => void) {
+  previewListeners.add(onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    previewListeners.delete(onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function writePreviews(on: boolean) {
+  try {
+    localStorage.setItem(PREVIEW_KEY, on ? "on" : "off");
+  } catch {
+    // Not worth surfacing — the list still updates for this session.
+  }
+  for (const notify of previewListeners) notify();
+}
+
+const wordCount = (body: string) =>
+  body.trim() ? body.trim().split(/\s+/).length : 0;
+
+/**
+ * Writing freely is exactly when someone is most likely to need this, and it
+ * was two taps away under Profile → Help & Safety. Quiet on purpose: present
+ * without implying anything about what has just been written.
+ */
+function SupportLink() {
+  return (
+    <Link
+      href="/help#support"
+      className="flex items-center justify-center gap-2 py-1 text-xs font-semibold text-ink-subtle transition-colors hover:text-ink-muted"
+    >
+      <LifeBuoy className="size-3.5" aria-hidden />
+      If things are hard right now, there is help
+    </Link>
   );
 }

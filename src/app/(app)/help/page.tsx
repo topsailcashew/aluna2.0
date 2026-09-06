@@ -85,7 +85,7 @@ export default function HelpPage() {
 
       {/* The important part of this page. Deliberately not buried at the end
           of a scroll behind decorative content. */}
-      <section className="space-y-3">
+      <section id="support" className="scroll-mt-20 space-y-3">
         <h2 className="px-1 text-base font-extrabold tracking-tight text-ink">
           If things are hard right now
         </h2>

@@ -33,6 +33,11 @@ export function formatShortDate(date: Date): string {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
+/** Hour only ("2 PM"), for chart labels with no room for minutes. */
+export function formatShortTime(date: Date): string {
+  return date.toLocaleTimeString(undefined, { hour: "numeric" });
+}
+
 export function formatDateTime(date: Date): string {
   return date.toLocaleString(undefined, {
     month: "short",
