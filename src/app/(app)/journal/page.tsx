@@ -105,7 +105,7 @@ export default function JournalPage() {
         <div className="space-y-1.5">
           <label
             htmlFor="journal-body"
-            className="block text-xs font-semibold tracking-wide text-ink-muted uppercase"
+            className="block text-xs font-semibold text-ink-muted"
           >
             Whatever you like
           </label>

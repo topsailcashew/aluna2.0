@@ -35,7 +35,7 @@ export function IntensitySlider({
       <div className="flex items-baseline justify-between">
         <label
           htmlFor={id}
-          className="text-xs font-semibold tracking-wide text-ink-muted uppercase"
+          className="text-xs font-semibold text-ink-muted"
         >
           {label}
         </label>

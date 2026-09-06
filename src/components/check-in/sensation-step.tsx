@@ -245,46 +245,72 @@ export function SensationStep({ sensations, onChange }: SensationStepProps) {
             Nothing logged yet — this step is optional.
           </p>
         ) : (
-          <ul className="flex flex-wrap gap-2">
+          <ol className="relative space-y-2.5">
+            {/* A rail ties the logged spots into the app's timeline motif; the
+                intensity node colours each one and the number reads as a stat. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-3 bottom-3 left-[7px] w-px bg-line"
+            />
             <AnimatePresence initial={false} mode="popLayout">
               {sensations.map((sensation) => {
+                const tone = intensityTone(sensation.intensity);
                 return (
                   <motion.li
                     key={sensation.id}
                     layout
-                    initial={{ opacity: 0, scale: 0.85, y: 6 }}
+                    initial={{ opacity: 0, scale: 0.96, y: 6 }}
                     animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.8 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ type: "spring", stiffness: 420, damping: 32 }}
+                    className="relative pl-7"
+                    style={{ "--tone": tone } as CSSProperties}
                   >
                     <span
-                      className="tone-surface inline-flex items-center gap-2 rounded-full py-1.5 pr-1.5 pl-3.5 text-sm font-bold"
-                      style={
-                        {
-                          "--tone": intensityTone(sensation.intensity),
-                        } as CSSProperties
-                      }
-                      title={sensation.note || undefined}
+                      aria-hidden
+                      className="absolute top-1/2 left-0 grid w-[15px] -translate-y-1/2 place-items-center"
                     >
-                      {bodyPartLabel(sensation.bodyPart)}
-                      <span className="opacity-60">|</span>
-                      <span className="tabular-nums">
-                        {sensation.intensity}
+                      <span
+                        className="size-2.5 rounded-full ring-4 ring-[var(--surface)]"
+                        style={{ backgroundColor: tone }}
+                      />
+                    </span>
+
+                    <div className="tone-surface flex items-center gap-3 rounded-2xl py-2.5 pr-2 pl-3.5">
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold">
+                          {bodyPartLabel(sensation.bodyPart)}
+                        </p>
+                        {sensation.note && (
+                          <p className="truncate text-xs opacity-70">
+                            {sensation.note}
+                          </p>
+                        )}
+                      </div>
+
+                      <span className="flex items-baseline gap-0.5">
+                        <span className="stat text-xl">
+                          {sensation.intensity}
+                        </span>
+                        <span className="text-[10px] font-semibold opacity-60">
+                          / 10
+                        </span>
                       </span>
+
                       <button
                         type="button"
                         onClick={() => removeSensation(sensation.id)}
                         aria-label={`Remove ${bodyPartLabel(sensation.bodyPart)} sensation`}
-                        className="grid size-5 place-items-center rounded-full bg-surface/60 transition-colors hover:bg-surface"
+                        className="grid size-7 shrink-0 place-items-center rounded-full bg-surface/60 transition-colors hover:bg-surface"
                       >
-                        <X className="size-3" strokeWidth={3} aria-hidden />
+                        <X className="size-3.5" strokeWidth={3} aria-hidden />
                       </button>
-                    </span>
+                    </div>
                   </motion.li>
                 );
               })}
             </AnimatePresence>
-          </ul>
+          </ol>
         )}
       </section>
     </div>

@@ -98,7 +98,7 @@ export default function WelcomePage() {
         </span>
 
         <div className="space-y-2">
-          <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
+          <p className="text-xs font-bold text-deep-500 dark:text-deep-300">
             {screen.eyebrow}
           </p>
           <h1 className="text-3xl leading-tight font-display text-balance text-ink">

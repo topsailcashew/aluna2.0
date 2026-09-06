@@ -26,7 +26,7 @@ export function BackHeader({
         Back
       </button>
       <div className="space-y-1">
-        <p className="text-xs font-bold tracking-[0.14em] text-deep-500 uppercase">
+        <p className="text-xs font-bold text-deep-500 dark:text-deep-300">
           {eyebrow}
         </p>
         <h1 className="text-2xl font-display text-ink">

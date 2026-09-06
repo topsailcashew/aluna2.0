@@ -29,7 +29,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={fieldId}
-            className="block text-xs font-semibold tracking-wide text-ink-muted uppercase"
+            className="block text-xs font-semibold text-ink-muted"
           >
             {label}
             {optional && (

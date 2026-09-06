@@ -57,8 +57,8 @@ export function EmotionDistribution({ entries }: { entries: CheckInEntry[] }) {
 
             <div className="pointer-events-none absolute inset-0 grid place-content-center text-center">
               <p className="text-xl font-extrabold text-ink">{total}</p>
-              <p className="text-[10px] font-bold tracking-wide text-ink-subtle uppercase">
-                logged
+              <p className="text-[10px] font-bold text-ink-subtle">
+                Logged
               </p>
             </div>
           </div>
