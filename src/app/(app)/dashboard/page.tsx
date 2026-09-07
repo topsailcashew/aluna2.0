@@ -16,14 +16,11 @@ import { ErrorState, OfflineNote } from "@/components/ui/error-state";
 import {
   daysLoggedThisWeek,
   hasCheckedInToday,
+  todaysPrimaryFamily,
   weekStrip,
 } from "@/lib/analytics";
 import { dayKey } from "@/lib/data/prompts";
-import {
-  PRIMARY_BY_ID,
-  primaryIdsFrom,
-  type PrimaryEmotionId,
-} from "@/lib/data/emotions";
+import { PRIMARY_BY_ID } from "@/lib/data/emotions";
 import { reflectionFor } from "@/lib/data/reflections";
 import { useEntries } from "@/hooks/use-entries";
 import { useOnline } from "@/hooks/use-online";
@@ -38,13 +35,9 @@ export default function DashboardPage() {
   const checkedInToday = hasCheckedInToday(entries);
   const days = weekStrip(entries);
 
-  // The family behind today's most recent check-in. It tints the whole screen,
-  // so the app looks like whatever the day has been rather than always the same.
-  const todaysFamily: PrimaryEmotionId | null = (() => {
-    const today = dayKey();
-    const entry = entries.find((item) => dayKey(item.createdAt) === today);
-    return entry ? (primaryIdsFrom(entry.emotions)[0] ?? null) : null;
-  })();
+  // Tints the whole screen, so the app looks like whatever the day has been
+  // rather than always the same.
+  const todaysFamily = todaysPrimaryFamily(entries);
 
   const family = todaysFamily ? PRIMARY_BY_ID.get(todaysFamily) : undefined;
   const reflection = reflectionFor(todaysFamily, dayKey());

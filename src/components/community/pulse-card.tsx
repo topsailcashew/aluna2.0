@@ -6,13 +6,13 @@ import { toast } from "sonner";
 
 import { Card, CardSubtitle, CardTitle } from "@/components/ui/card";
 import { HatchedBars, type HatchedBar } from "@/components/ui/hatched-bars";
-import { EMOTIONS, primaryIdsFrom } from "@/lib/data/emotions";
-import { dayKey } from "@/lib/data/prompts";
+import { EMOTIONS } from "@/lib/data/emotions";
 import {
   contributeToPulse,
   hasContributedToday,
   type PulseCounts,
 } from "@/lib/firebase/community";
+import { todaysPrimaryFamily } from "@/lib/analytics";
 import { useAuth } from "@/lib/firebase/auth-context";
 import type { CheckInEntry } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -58,12 +58,7 @@ export function PulseCard({ pulse, entries, optedIn }: PulseCardProps) {
     solid: (pulse[p.id] ?? 0) === peak,
   }));
 
-  // The family behind the most recent check-in written today.
-  const todaysPrimary = (() => {
-    const today = dayKey();
-    const entry = entries.find((item) => dayKey(item.createdAt) === today);
-    return entry ? (primaryIdsFrom(entry.emotions)[0] ?? null) : null;
-  })();
+  const todaysPrimary = todaysPrimaryFamily(entries);
 
   const contribute = async () => {
     if (!user || !todaysPrimary) return;

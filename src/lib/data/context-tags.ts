@@ -108,5 +108,3 @@ export const JOURNAL_PROMPTS = [
     hint: "Small counts.",
   },
 ] as const;
-
-export type JournalPromptId = (typeof JOURNAL_PROMPTS)[number]["id"];

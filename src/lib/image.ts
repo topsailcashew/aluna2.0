@@ -8,8 +8,8 @@
  * lands around 15 KB — comfortably inside Firestore's 1 MiB document ceiling.
  */
 
-export const AVATAR_SIZE = 192;
-export const MAX_AVATAR_BYTES = 80_000;
+const AVATAR_SIZE = 192;
+const MAX_AVATAR_BYTES = 80_000;
 
 export class ImageTooLargeError extends Error {
   constructor() {

@@ -12,7 +12,7 @@ export interface Slice {
   end: number;
 }
 
-export function pointOnCircle(radius: number, angle: number) {
+function pointOnCircle(radius: number, angle: number) {
   const radians = ((angle - 90) * Math.PI) / 180;
   return {
     x: CENTER + radius * Math.cos(radians),

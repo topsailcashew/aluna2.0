@@ -49,7 +49,7 @@ export type SignUpValues = z.infer<typeof signUpSchema>;
 /* Check-in                                                            */
 /* ------------------------------------------------------------------ */
 
-export const sensationSchema = z.object({
+const sensationSchema = z.object({
   bodyPart: z
     .string()
     .refine((id) => BODY_PART_BY_ID.has(id), "Choose a body part"),
@@ -72,14 +72,14 @@ export interface LoggedSensation extends SensationValues {
 
 const tagScale = z.enum(["low", "mid", "high"]);
 
-export const contextTagsSchema = z.object({
+const contextTagsSchema = z.object({
   sleep: tagScale.optional(),
   energy: tagScale.optional(),
   stress: tagScale.optional(),
   activities: z.array(z.string()).max(20),
 });
 
-export const journalSchema = z.record(
+const journalSchema = z.record(
   z.string(),
   z.string().max(2000, "That is longer than a journal entry needs to be"),
 );
@@ -101,8 +101,3 @@ export const checkInSchema = z.object({
 });
 
 export type CheckInValues = z.infer<typeof checkInSchema>;
-
-/** First error message from a Zod parse, or null when the value is valid. */
-export function firstIssue(result: z.ZodSafeParseResult<unknown>): string | null {
-  return result.success ? null : (result.error.issues[0]?.message ?? "Invalid");
-}

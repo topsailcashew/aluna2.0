@@ -5,7 +5,7 @@
  * sees the same prompt on the same day with no backend and no scheduled job.
  */
 
-export const WEEKLY_PROMPTS = [
+const WEEKLY_PROMPTS = [
   "What has been kinder to you this week than you expected?",
   "Name one thing your body has been trying to tell you.",
   "What did you let go of, even a little?",
@@ -21,7 +21,7 @@ export const WEEKLY_PROMPTS = [
   "What does rest actually look like for you?",
 ];
 
-export function isoWeek(date = new Date()): number {
+function isoWeek(date = new Date()): number {
   const copy = new Date(
     Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
   );

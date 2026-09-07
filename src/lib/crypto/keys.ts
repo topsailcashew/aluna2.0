@@ -230,7 +230,7 @@ export function generatePhrase(): string {
 }
 
 /** Case and spacing are not part of the secret; the words are. */
-export function normalisePhrase(input: string): string {
+function normalisePhrase(input: string): string {
   return input.trim().toLowerCase().split(/\s+/).filter(Boolean).join(" ");
 }
 

@@ -17,9 +17,9 @@ import { primaryIdsFrom } from "@/lib/data/emotions";
 import type { CheckInEntry } from "@/lib/types";
 
 /** Entries needed on *each* side of a comparison before it is shown. */
-export const MIN_GROUP = 4;
+const MIN_GROUP = 4;
 /** Entries needed overall before any observation appears. */
-export const MIN_ENTRIES = 10;
+const MIN_ENTRIES = 10;
 
 /** Families counted as pleasant, for a crude but honest positivity ratio. */
 const PLEASANT = new Set(["happy", "surprised"]);

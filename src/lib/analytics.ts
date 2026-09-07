@@ -25,7 +25,7 @@ export interface TimelinePoint {
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Mean intensity across every sensation in a single entry. */
-export function entryIntensity(entry: CheckInEntry): number | null {
+function entryIntensity(entry: CheckInEntry): number | null {
   if (!entry.sensations.length) return null;
   return average(entry.sensations.map((s) => s.intensity));
 }
@@ -170,6 +170,25 @@ export function weekStrip(entries: CheckInEntry[], now = new Date()): DayMood[] 
       isToday: date.getTime() === today,
     };
   });
+}
+
+/**
+ * The family behind today's most recent check-in, or null on a day with none.
+ *
+ * The dashboard tints the whole screen with it and the community card offers it
+ * as the thing to contribute. That is the same question asked twice, and it was
+ * previously answered by two identical copies of this block.
+ */
+export function todaysPrimaryFamily(
+  entries: CheckInEntry[],
+  now = new Date(),
+): PrimaryEmotionId | null {
+  const today = startOfDay(now).getTime();
+  // Entries arrive newest first, so the first match is the latest one today.
+  const entry = entries.find(
+    (item) => startOfDay(item.createdAt).getTime() === today,
+  );
+  return entry ? (primaryIdsFrom(entry.emotions)[0] ?? null) : null;
 }
 
 /** True when a check-in has already been written today. */
