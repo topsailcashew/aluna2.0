@@ -39,10 +39,12 @@ service cloud.firestore {
       }
 
       // Private marker showing this person already added to a day's pulse.
-      // The pulse write is gated on this existing, so once-a-day is enforced
-      // server-side rather than on trust.
+      // Delete stays open deliberately: it is the person's own record of what
+      // they shared and on which day, so erasing an account has to be able to
+      // erase it too. See the communityPulse note for what that costs.
       match /contributions/{day} {
-        allow read, write: if isOwner(userId);
+        allow read, create, delete: if isOwner(userId);
+        allow update: if false;
       }
 
     }
@@ -51,16 +53,17 @@ service cloud.firestore {
     /* Shared: the community tab                                         */
     /* ---------------------------------------------------------------- */
 
-    // One document per day holding a tally per emotion family. Anyone signed
-    // in may read it and may add exactly one to exactly one family. The rules
-    // cannot tell whether this person already counted today — a sibling write
-    // in the same batch is invisible here — so once-a-day is enforced by the
-    // client against the private marker above. Inflating a mood tally harms
-    // nobody, and the alternative is a Cloud Function.
     // One document per day, a tally per emotion family. Adding to it requires
     // creating your own private contribution marker for that day in the SAME
-    // write, and not already having one — so a person can move the pulse by at
-    // most one, once a day, enforced by the rules rather than by trust.
+    // write, and not already having one — so an ordinary client contributes at
+    // most once a day, enforced here rather than on trust.
+    //
+    // It is not a hard cap, and should not be described as one. The marker is
+    // the caller's own document and they may delete it (account deletion has to
+    // be able to), after which !exists(marker) is true again and they may add
+    // another. Closing that would mean an append-only marker nobody can erase,
+    // or a Cloud Function. Neither is worth it for an anonymous mood tally that
+    // nothing depends on — but the limit is a speed bump, not a guarantee.
     match /communityPulse/{day} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()
@@ -74,8 +77,8 @@ service cloud.firestore {
 
     // The wall. Posts carry NO author id — anonymity has to survive someone
     // querying the raw documents, not just the UI hiding a field. Ownership
-    // lives in the author's private users/{uid}/reflections marker, written in
-    // the same batch as the post and consulted only for deletion.
+    // lives in the top-level reflectionAuthors/{reflectionId} record, written in
+    // the same batch as the post and readable only by its author.
     match /reflections/{reflectionId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn()

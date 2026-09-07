@@ -55,12 +55,36 @@ export async function changeDisplayName(
   await saveProfile(user.uid, { displayName });
 }
 
+/** Every subcollection hanging off users/{uid}. Deleting the parent document
+ *  does NOT remove these — Firestore has no cascade — so each has to be walked
+ *  by name. Add to this list when a new subcollection appears, or its contents
+ *  will outlive the account that wrote them. */
+const USER_SUBCOLLECTIONS = ["entries", "journal", "contributions"] as const;
+
+/** Deletes every document in one subcollection, batched to Firestore's limit. */
+async function purgeSubcollection(uid: string, name: string): Promise<void> {
+  const snapshot = await getDocs(collection(getDb(), "users", uid, name));
+
+  // Firestore caps a batch at 500 writes.
+  for (let i = 0; i < snapshot.docs.length; i += 400) {
+    const batch = writeBatch(getDb());
+    for (const entry of snapshot.docs.slice(i, i + 400)) {
+      batch.delete(entry.ref);
+    }
+    await batch.commit();
+  }
+}
+
 /**
  * Removes the account and everything under it.
  *
- * Entries are deleted first: once the auth user is gone the client can no
- * longer satisfy the security rules, and the documents would be orphaned
- * beyond anyone's reach.
+ * Order matters twice over. Every subcollection is emptied before the profile
+ * document, and the profile document before the auth user: once the auth user
+ * is gone the client can no longer satisfy the security rules, so anything left
+ * behind is unreachable by the person who wrote it and undeletable by anyone.
+ *
+ * Journal notes in particular are the most personal thing the app holds. They
+ * are encrypted, but "delete my account" has to mean the ciphertext goes too.
  */
 export async function deleteAccount(
   user: User,
@@ -68,19 +92,8 @@ export async function deleteAccount(
 ): Promise<void> {
   await reauthenticate(user, currentPassword);
 
-  const entries = await getDocs(
-    collection(getDb(), "users", user.uid, "entries"),
-  );
-
-  // Firestore caps a batch at 500 writes.
-  const chunks: (typeof entries.docs)[] = [];
-  for (let i = 0; i < entries.docs.length; i += 400) {
-    chunks.push(entries.docs.slice(i, i + 400));
-  }
-  for (const chunk of chunks) {
-    const batch = writeBatch(getDb());
-    chunk.forEach((entry) => batch.delete(entry.ref));
-    await batch.commit();
+  for (const name of USER_SUBCOLLECTIONS) {
+    await purgeSubcollection(user.uid, name);
   }
 
   await deleteDoc(doc(getDb(), "users", user.uid));
