@@ -8,7 +8,6 @@ import {
   CalendarCheck,
   CalendarDays,
   ChevronRight,
-  Flame,
   HelpCircle,
   LineChart,
   LogOut,
@@ -22,7 +21,7 @@ import { AvatarEditor } from "@/components/profile/avatar-editor";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { currentStreak } from "@/lib/analytics";
+import { daysLoggedThisWeek } from "@/lib/analytics";
 import { useEntries } from "@/hooks/use-entries";
 import { useProfile } from "@/hooks/use-profile";
 import { changeDisplayName } from "@/lib/firebase/account";
@@ -76,7 +75,7 @@ export default function ProfilePage() {
 
   if (!user) return null;
   const name = profile.displayName || user.displayName || "";
-  const streak = currentStreak(entries);
+  const daysLogged = daysLoggedThisWeek(entries);
 
   const saveName = async () => {
     const trimmed = nameDraft.trim();
@@ -201,15 +200,13 @@ export default function ProfilePage() {
                 className="grid size-7 place-items-center rounded-xl text-white"
                 style={{ backgroundColor: "var(--color-happy)" }}
               >
-                <Flame className="size-4" strokeWidth={2.4} />
+                <CalendarDays className="size-4" strokeWidth={2.4} />
               </span>
-              <span className="text-xs font-bold opacity-70">Day streak</span>
+              <span className="text-xs font-bold opacity-70">Days logged</span>
             </span>
             <span className="flex items-baseline gap-1">
-              <span className="stat text-3xl">{streak}</span>
-              <span className="text-xs font-semibold opacity-70">
-                {streak === 1 ? "day" : "days"}
-              </span>
+              <span className="stat text-3xl">{daysLogged}</span>
+              <span className="text-xs font-semibold opacity-70">of 7 days</span>
             </span>
           </div>
         </section>

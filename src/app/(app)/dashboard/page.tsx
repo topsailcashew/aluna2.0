@@ -13,7 +13,11 @@ import { PatternCard } from "@/components/dashboard/pattern-card";
 import { WeekWave } from "@/components/dashboard/week-wave";
 import { ChartSkeleton } from "@/components/ui/skeleton";
 import { ErrorState, OfflineNote } from "@/components/ui/error-state";
-import { currentStreak, hasCheckedInToday, weekStrip } from "@/lib/analytics";
+import {
+  daysLoggedThisWeek,
+  hasCheckedInToday,
+  weekStrip,
+} from "@/lib/analytics";
 import { dayKey } from "@/lib/data/prompts";
 import {
   PRIMARY_BY_ID,
@@ -30,7 +34,7 @@ export default function DashboardPage() {
   const { profile } = useProfile();
   const online = useOnline();
 
-  const streak = currentStreak(entries);
+  const daysLogged = daysLoggedThisWeek(entries);
   const checkedInToday = hasCheckedInToday(entries);
   const days = weekStrip(entries);
 
@@ -73,7 +77,7 @@ export default function DashboardPage() {
             accent={family?.color ?? null}
             checkedInToday={checkedInToday}
             familyLabel={family?.label ?? null}
-            streak={streak}
+            daysLogged={daysLogged}
           />
 
           <div className="card flex gap-3 bg-surface/70 p-4 backdrop-blur">

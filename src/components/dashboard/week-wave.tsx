@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { Card } from "@/components/ui/card";
 import { HatchedBars, type HatchedBar } from "@/components/ui/hatched-bars";
 import { primaryIdsFrom } from "@/lib/data/emotions";
-import type { DayMood } from "@/lib/analytics";
+import { daysLoggedThisWeek, type DayMood } from "@/lib/analytics";
 import type { CheckInEntry } from "@/lib/types";
 import { dayKey } from "@/lib/data/prompts";
 
@@ -49,7 +49,7 @@ export function WeekWave({
     });
   }, [days, entries]);
 
-  const logged = days.filter((day) => day.entryCount > 0).length;
+  const logged = daysLoggedThisWeek(entries);
 
   return (
     <Card className="space-y-3 bg-surface/70 backdrop-blur">

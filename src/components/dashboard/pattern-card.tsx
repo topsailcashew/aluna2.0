@@ -1,11 +1,11 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { Activity, CalendarCheck, Flame, Smile } from "lucide-react";
+import { Activity, CalendarCheck, CalendarDays, Smile } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 import {
-  currentStreak,
+  daysLoggedThisWeek,
   dominantEmotion,
   weeklyIntensityAverage,
 } from "@/lib/analytics";
@@ -15,13 +15,13 @@ import { relativeTime } from "@/lib/utils";
 /**
  * The reference's metric grid: four pale-tint cards, each a small filled icon
  * chip, a label, and a big number. Replaces the old stacked pattern card —
- * dominant family, streak, last check-in, and week-average intensity read at a
- * glance and each carries its own family tint for variety.
+ * dominant family, days logged, last check-in and week-average intensity read
+ * at a glance and each carries its own family tint for variety.
  */
 export function PatternCard({ entries }: { entries: CheckInEntry[] }) {
   const dominant = dominantEmotion(entries);
   const weekly = weeklyIntensityAverage(entries);
-  const streak = currentStreak(entries);
+  const daysLogged = daysLoggedThisWeek(entries);
   const latest = entries[0];
 
   return (
@@ -34,10 +34,10 @@ export function PatternCard({ entries }: { entries: CheckInEntry[] }) {
       />
       <Metric
         tone="var(--color-happy)"
-        icon={Flame}
-        label="Streak"
-        value={streak > 0 ? String(streak) : "0"}
-        unit={streak === 1 ? "day" : "days"}
+        icon={CalendarDays}
+        label="Logged"
+        value={String(daysLogged)}
+        unit="of 7 days"
       />
       <Metric
         tone="var(--color-fearful)"

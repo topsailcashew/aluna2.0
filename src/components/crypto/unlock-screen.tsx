@@ -74,8 +74,10 @@ export function UnlockScreen() {
               Unlock your entries
             </h1>
             <p className="text-sm leading-relaxed text-ink-muted">
-              Your check-ins are encrypted with a key only you hold. It is never
-              saved to this device, so it is needed again after every reload.
+              The same password you signed up with. It unwraps a key that is
+              never saved to this device — which is what keeps your entries
+              unreadable to everyone else, us included, and why every reload
+              asks again.
             </p>
           </div>
         </div>

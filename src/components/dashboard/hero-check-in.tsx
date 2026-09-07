@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { ArrowUpRight, Check, Flame } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Check } from "lucide-react";
 
 interface HeroCheckInProps {
   accent: string | null;
   checkedInToday: boolean;
   familyLabel: string | null;
-  streak: number;
+  daysLogged: number;
 }
 
 /**
@@ -21,7 +21,7 @@ export function HeroCheckIn({
   accent,
   checkedInToday,
   familyLabel,
-  streak,
+  daysLogged,
 }: HeroCheckInProps) {
   const tone = accent ?? "var(--color-deep-400)";
 
@@ -52,10 +52,10 @@ export function HeroCheckIn({
         {checkedInToday ? "Tap to add another check-in" : "A minute of noticing"}
       </p>
 
-      {streak > 0 && (
+      {daysLogged > 0 && (
         <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-surface/55 px-2.5 py-1 text-[11px] font-bold">
-          <Flame className="size-3" aria-hidden />
-          {streak} day{streak === 1 ? "" : "s"} in a row
+          <CalendarDays className="size-3" aria-hidden />
+          {daysLogged} of the last 7 days
         </span>
       )}
     </Link>

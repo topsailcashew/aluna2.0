@@ -100,31 +100,24 @@ export function intensityTimeline(
     .sort((a, b) => a.timestamp - b.timestamp);
 }
 
-/** Consecutive days ending today (or yesterday) that contain a check-in. */
-export function currentStreak(entries: CheckInEntry[], now = new Date()): number {
-  if (!entries.length) return 0;
-
-  const days = new Set(
-    entries.map((entry) => startOfDay(entry.createdAt).getTime()),
-  );
-
-  let cursor = startOfDay(now).getTime();
-  // A streak survives until the end of the following day, so an evening
-  // person who hasn't checked in yet today keeps yesterday's run.
-  if (!days.has(cursor)) cursor -= DAY_MS;
-
-  let streak = 0;
-  while (days.has(cursor)) {
-    streak += 1;
-    cursor -= DAY_MS;
-  }
-  return streak;
-}
-
 function startOfDay(date: Date): Date {
   const copy = new Date(date);
   copy.setHours(0, 0, 0, 0);
   return copy;
+}
+
+/**
+ * Days in the trailing week carrying at least one check-in.
+ *
+ * Deliberately not a streak. A gap lowers this number but breaks nothing, so
+ * there is no run to protect — which is what Help, Welcome and the reflections
+ * have been telling people all along while three counters said otherwise.
+ */
+export function daysLoggedThisWeek(
+  entries: CheckInEntry[],
+  now = new Date(),
+): number {
+  return weekStrip(entries, now).filter((day) => day.entryCount > 0).length;
 }
 
 export interface DayMood {
