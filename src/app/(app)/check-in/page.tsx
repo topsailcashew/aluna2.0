@@ -22,20 +22,29 @@ import type { ContextTags, JournalAnswers } from "@/lib/types";
 /**
  * Two routes through the same data.
  *
- * `quick` is the wheel and nothing else, for someone checking in on the way
- * to something. `full` adds the body scan, context, thought patterns and the
- * journal. Both write an identical entry — the quick one simply leaves the
- * other fields empty, which is also what happens when you skip them.
+ * `quick` is the wheel and nothing else, for someone checking in on the way to
+ * something. `full` carries on past it into context, the body, thought
+ * patterns and a reflection. Both write an identical entry — the quick one
+ * simply leaves the other fields empty, which is also what happens when you
+ * skip them.
+ *
+ * Naming the feeling comes first because it is the only required step, and
+ * because asking someone to tap out sensations before they have said a single
+ * word about how they feel put the longest step in front of the least willing
+ * moment. The three observations then run body, mind, reflection.
+ *
+ * `quick` is a prefix of `full`. That is what lets someone switch flows
+ * mid-check-in without losing their place.
  */
 type StepId = "sensations" | "emotions" | "tags" | "thoughts" | "journal";
 
 const FLOWS: Record<"quick" | "full", StepId[]> = {
   quick: ["emotions", "tags"],
-  full: ["sensations", "emotions", "tags", "thoughts", "journal"],
+  full: ["emotions", "tags", "sensations", "thoughts", "journal"],
 };
 
 const TITLES: Record<StepId, string> = {
-  sensations: "Body check-in",
+  sensations: "Body sensations",
   emotions: "Emotion map",
   tags: "Context",
   thoughts: "Mind observation",
@@ -83,15 +92,11 @@ function CheckInFlow() {
   }, []);
 
   /**
-   * Switching to the full flow starts at step one. Anything already chosen on
-   * the wheel is kept — it is the same state — but the body scan is the point
-   * of asking for more detail, so it should not be skipped past.
+   * Switching flows keeps you exactly where you are. Since `quick` is a prefix
+   * of `full`, the extra steps simply appear after the current one instead of
+   * the flow restarting underneath someone who has already named a feeling.
    */
-  const expand = () => {
-    setMode("full");
-    setIndex(0);
-    setFurthest(FLOWS.full.indexOf("tags"));
-  };
+  const expand = () => setMode("full");
 
   const goNext = () => {
     if (step === "emotions" && emotions.length === 0) {
