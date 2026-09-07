@@ -44,6 +44,12 @@ interface EmotionWheelProps {
   /** Selected level-3 emotion ids. */
   value: string[];
   onChange: (next: string[]) => void;
+  /**
+   * Opens the wheel already drilled in. Check-in leaves this alone and starts
+   * closed; the landing page uses it so the hero shows populated rings rather
+   * than one ring inside two empty placeholders.
+   */
+  initialOpen?: { family: string; sub?: string };
 }
 
 /**
@@ -51,9 +57,15 @@ interface EmotionWheelProps {
  * category's sub-categories next, then its nine specific emotions on the rim.
  * Rings appear as you drill in, so the wheel never shows every label at once.
  */
-export function EmotionWheel({ value, onChange }: EmotionWheelProps) {
-  const [primaryId, setPrimaryId] = useState<string | null>(null);
-  const [subId, setSubId] = useState<string | null>(null);
+export function EmotionWheel({
+  value,
+  onChange,
+  initialOpen,
+}: EmotionWheelProps) {
+  const [primaryId, setPrimaryId] = useState<string | null>(
+    initialOpen?.family ?? null,
+  );
+  const [subId, setSubId] = useState<string | null>(initialOpen?.sub ?? null);
   const [hovered, setHovered] = useState<string | null>(null);
 
   const primary = useMemo(

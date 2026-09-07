@@ -170,6 +170,18 @@
   }
 
   /* Hides scrollbars on the horizontal chip rails without losing scroll. */
+  /* Quiet text link for the marketing page's nav and footer: no underline at
+     rest, so a row of them reads as one line rather than five decorated words. */
+  .nav-link {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--ink-muted);
+    transition: color 150ms ease;
+  }
+  .nav-link:hover {
+    color: var(--ink);
+  }
+
   .no-scrollbar {
     scrollbar-width: none;
     -ms-overflow-style: none;
