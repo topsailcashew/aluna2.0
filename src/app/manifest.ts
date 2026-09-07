@@ -10,7 +10,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Aluna",
     short_name: "Aluna",
     description: "Notice, name, and track how you feel.",
-    start_url: "/",
+    // The app, not the front door. "/" is the landing page for everyone now,
+    // so an installed Aluna that started there would open on a sales pitch.
+    // Signed-out launches fall through /dashboard's gate to sign-in as before.
+    start_url: "/dashboard",
     display: "standalone",
     orientation: "portrait",
     background_color: "#eef3f0",

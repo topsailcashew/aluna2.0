@@ -12,10 +12,12 @@ import { WeekWave } from "@/components/dashboard/week-wave";
 import { DEMO_ENTRIES } from "@/components/marketing/demo-data";
 import { PhoneFrame, Photo } from "@/components/marketing/frames";
 import { daysLoggedThisWeek, weekStrip } from "@/lib/analytics";
+import { useAuth } from "@/lib/firebase/auth-context";
 import { labelOf, primaryOf } from "@/lib/data/emotions";
 
 /**
- * The public landing page, shown at / to anyone not signed in.
+ * The public landing page at /, shown to everyone. Signed-in visitors get the
+ * same page with its calls to action pointed at the app instead of at signup.
  *
  * Two rules held throughout. Show rather than tell: the hero is the working
  * emotion wheel and the previews are the real dashboard components, so the
@@ -29,26 +31,42 @@ import { labelOf, primaryOf } from "@/lib/data/emotions";
  */
 export function Landing() {
   const [tried, setTried] = useState<string[]>([]);
+  const { user } = useAuth();
+
+  /**
+   * Anyone already signed in is not a prospect, so the buttons stop selling and
+   * start being useful. While auth is still resolving `user` is null, which is
+   * the right guess for a landing page and costs a signed-in visitor one
+   * relabel rather than everyone a spinner.
+   */
+  const cta = user
+    ? { href: "/dashboard", label: "Open Aluna" }
+    : { href: "/sign-up", label: "Start a check-in" };
 
   return (
     <div className="min-h-dvh text-ink">
-      <SiteNav />
+      <SiteNav signedIn={Boolean(user)} />
       <main>
-        <Hero tried={tried} onTry={setTried} />
+        <Hero tried={tried} onTry={setTried} cta={cta} />
         <Inside />
         <InTheDay />
         <Privacy />
         <Restraint />
-        <Close />
+        <Close cta={cta} />
       </main>
       <SiteFooter />
     </div>
   );
 }
 
+interface Cta {
+  href: string;
+  label: string;
+}
+
 /* ------------------------------------------------------------------ */
 
-function SiteNav() {
+function SiteNav({ signedIn }: { signedIn: boolean }) {
   return (
     <header className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-5 py-5 sm:px-8">
       <span className="flex items-center gap-2.5">
@@ -66,10 +84,10 @@ function SiteNav() {
       </nav>
 
       <Link
-        href="/sign-in"
+        href={signedIn ? "/dashboard" : "/sign-in"}
         className="rounded-full border border-line-strong px-4 py-2 text-sm font-bold transition-colors hover:bg-surface"
       >
-        Sign in
+        {signedIn ? "Open Aluna" : "Sign in"}
       </Link>
     </header>
   );
@@ -80,9 +98,11 @@ function SiteNav() {
 function Hero({
   tried,
   onTry,
+  cta,
 }: {
   tried: string[];
   onTry: (next: string[]) => void;
+  cta: Cta;
 }) {
   const named = tried.map((id) => ({
     id,
@@ -135,10 +155,10 @@ function Hero({
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link
-              href="/sign-up"
+              href={cta.href}
               className="rounded-full bg-marker px-6 py-3.5 text-sm font-bold text-marker-ink transition-transform active:scale-[0.98]"
             >
-              Start a check-in
+              {cta.label}
             </Link>
             <a
               href="#inside"
@@ -330,17 +350,17 @@ function Restraint() {
 
 /* ------------------------------------------------------------------ */
 
-function Close() {
+function Close({ cta }: { cta: Cta }) {
   return (
     <section className="mx-auto w-full max-w-6xl px-5 py-24 text-center sm:px-8">
       <h2 className="mx-auto max-w-[16ch] font-display text-[clamp(2.2rem,5.5vw,3.6rem)] leading-[1.0] tracking-[-0.03em] text-balance">
         Start with one word for today.
       </h2>
       <Link
-        href="/sign-up"
+        href={cta.href}
         className="mt-9 inline-block rounded-full bg-marker px-7 py-4 font-bold text-marker-ink transition-transform active:scale-[0.98]"
       >
-        Start a check-in
+        {cta.label}
       </Link>
       <p className="mt-5 text-sm text-ink-subtle">
         Leave whenever you like — deleting your account takes every entry with
