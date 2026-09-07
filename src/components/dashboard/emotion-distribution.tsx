@@ -1,16 +1,49 @@
 "use client";
 
 import { PieChart as PieIcon } from "lucide-react";
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 
 import { Card, CardSubtitle, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
-import { emotionDistribution, type EmotionSlice } from "@/lib/analytics";
+import { emotionDistribution } from "@/lib/analytics";
+import { ringSlicePath, type Slice } from "@/lib/wheel-geometry";
 import type { CheckInEntry } from "@/lib/types";
 
+/* ringSlicePath is centred on the wheel's 400x400 frame, so this shares it. */
+const OUTER = 190;
+const INNER = 118; // ~62% of OUTER, matching the donut this replaced.
+const GAP = 2; // degrees of breathing room between neighbours
+
+/**
+ * Proportional segments round the full circle, clockwise from twelve o'clock.
+ * A segment narrower than the gap would invert into an unclosed path, so the
+ * end is never allowed behind the start.
+ */
+function segmentsFor(counts: number[], total: number): Slice[] {
+  let cursor = 0;
+  return counts.map((count) => {
+    const sweep = (count / total) * 360;
+    const start = cursor + GAP / 2;
+    const end = Math.max(start, cursor + sweep - GAP / 2);
+    cursor += sweep;
+    return { start, end };
+  });
+}
+
+/**
+ * Hand-rolled SVG rather than a charting library, like every other chart here.
+ * Recharts was a 324KB chunk pulled in for this one donut, and it brought its
+ * own problems: sectors were built from an rAF sweep that never runs in a
+ * background tab, and its tooltip was invisible to screen readers. Each segment
+ * now carries a <title>, so the same numbers are available on hover and to
+ * assistive tech.
+ */
 export function EmotionDistribution({ entries }: { entries: CheckInEntry[] }) {
   const data = emotionDistribution(entries);
   const total = data.reduce((sum, slice) => sum + slice.count, 0);
+  const segments = segmentsFor(
+    data.map((slice) => slice.count),
+    Math.max(total, 1),
+  );
 
   return (
     <Card className="space-y-4">
@@ -30,36 +63,31 @@ export function EmotionDistribution({ entries }: { entries: CheckInEntry[] }) {
       ) : (
         <div className="flex flex-col items-center gap-4 sm:flex-row">
           <div className="relative h-40 w-40 shrink-0">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={data}
-                  dataKey="count"
-                  nameKey="label"
-                  innerRadius="62%"
-                  outerRadius="100%"
-                  paddingAngle={2}
-                  strokeWidth={0}
-                  startAngle={90}
-                  endAngle={-270}
-                  // Recharts builds sectors from an rAF-driven sweep, which
-                  // never runs in a background tab — leaving an empty donut.
-                  // The card doesn't need the flourish; correctness wins.
-                  isAnimationActive={false}
+            <svg
+              viewBox="0 0 400 400"
+              className="size-full"
+              role="img"
+              aria-label={`Emotion distribution across ${total} logged ${
+                total === 1 ? "family" : "families"
+              }`}
+            >
+              {data.map((slice, index) => (
+                <path
+                  key={slice.id}
+                  d={ringSlicePath(INNER, OUTER, segments[index])}
+                  fill={slice.color}
                 >
-                  {data.map((slice) => (
-                    <Cell key={slice.id} fill={slice.color} />
-                  ))}
-                </Pie>
-                <Tooltip content={<DistributionTooltip total={total} />} />
-              </PieChart>
-            </ResponsiveContainer>
+                  <title>
+                    {slice.label}: {slice.count} of {total} ·{" "}
+                    {Math.round((slice.count / total) * 100)}%
+                  </title>
+                </path>
+              ))}
+            </svg>
 
             <div className="pointer-events-none absolute inset-0 grid place-content-center text-center">
               <p className="text-xl font-extrabold text-ink">{total}</p>
-              <p className="text-[10px] font-bold text-ink-subtle">
-                Logged
-              </p>
+              <p className="text-[10px] font-bold text-ink-subtle">Logged</p>
             </div>
           </div>
 
@@ -83,35 +111,5 @@ export function EmotionDistribution({ entries }: { entries: CheckInEntry[] }) {
         </div>
       )}
     </Card>
-  );
-}
-
-function DistributionTooltip({
-  active,
-  payload,
-  total,
-}: {
-  active?: boolean;
-  payload?: { payload: EmotionSlice }[];
-  total: number;
-}) {
-  const slice = payload?.[0]?.payload;
-  if (!active || !slice) return null;
-
-  return (
-    <div className="rounded-xl border border-line bg-surface px-3 py-2 shadow-lift">
-      <p className="flex items-center gap-2 text-xs font-bold text-ink">
-        <span
-          aria-hidden
-          className="size-2.5 rounded-full"
-          style={{ backgroundColor: slice.color }}
-        />
-        {slice.label}
-      </p>
-      <p className="text-[11px] text-ink-muted">
-        {slice.count} of {total} check-ins ·{" "}
-        {Math.round((slice.count / total) * 100)}%
-      </p>
-    </div>
   );
 }

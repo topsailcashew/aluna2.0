@@ -286,10 +286,6 @@
 }
 
 /* Recharts leaves a focus ring on its wrapper; we drive focus ourselves. */
-.recharts-wrapper:focus,
-.recharts-surface:focus {
-  outline: none;
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,
