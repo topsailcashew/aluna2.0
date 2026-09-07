@@ -12,11 +12,22 @@ export interface Slice {
   end: number;
 }
 
+/**
+ * Rounded to three decimals, which on a 400-unit viewBox is far below a pixel.
+ *
+ * Not cosmetic: Node and the browser can differ in the last bit of Math.cos, so
+ * an unrounded path renders as "...344285" on the server and "...344283" in the
+ * client. React reads that as a hydration mismatch and throws the whole tree
+ * away. It only shows up where a ring is server-rendered rather than revealed
+ * by a tap, which is why the landing page found it and the check-in never did.
+ */
+const trim = (value: number) => Math.round(value * 1000) / 1000;
+
 function pointOnCircle(radius: number, angle: number) {
   const radians = ((angle - 90) * Math.PI) / 180;
   return {
-    x: CENTER + radius * Math.cos(radians),
-    y: CENTER + radius * Math.sin(radians),
+    x: trim(CENTER + radius * Math.cos(radians)),
+    y: trim(CENTER + radius * Math.sin(radians)),
   };
 }
 
