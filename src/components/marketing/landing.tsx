@@ -224,26 +224,24 @@ function Inside() {
 /* ------------------------------------------------------------------ */
 
 /**
- * Photography slots.
- *
- * Set `src` to a file under /public and the panel becomes that photograph.
- * Until then each renders as a brand wash rather than a hole, so the page is
- * finished either way. Shoot or licence portrait, 4:5, around 1200x1500.
+ * Photography. Portrait 4:5 to match the slot; next/image resizes and serves
+ * modern formats, so the large originals never reach a browser. Set `src` to
+ * null and the panel falls back to a brand wash rather than a hole.
  */
 const MOMENTS = [
   {
-    src: null,
-    alt: "Someone checking in on their phone at a kitchen table in the morning",
+    src: "/before-the-day.jpeg",
+    alt: "A woman at a kitchen table in morning light, looking down at her phone over a mug of tea and a half-eaten bowl of cereal",
     caption: "Before the day starts",
   },
   {
-    src: null,
-    alt: "A person on a sofa, phone in hand, part-way through a check-in",
+    src: "/end-of-day.jpeg",
+    alt: "A man sitting sideways on a sofa at dusk in a lamp-lit room, knees drawn up, phone held in both hands, a closed laptop pushed aside",
     caption: "Or after it has gone wrong",
   },
   {
-    src: null,
-    alt: "Close-up of hands holding a phone showing the Aluna emotion wheel",
+    src: "/checking-in.jpeg",
+    alt: "Close-up over someone's shoulder of two hands holding a phone showing Aluna's emotion wheel opened on the sad family",
     caption: "Wherever you actually are",
   },
 ];
