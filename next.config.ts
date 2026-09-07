@@ -12,10 +12,15 @@ const securityHeaders = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    // The avatar picker uses a file input, not getUserMedia, so nothing here
-    // is needed by the app.
+    // `microphone=(self)`, not `()`: Ramble transcribes speech through the Web
+    // Speech API, which this header gates. An empty allowlist denies the app
+    // its own microphone, and the failure surfaces as a browser permission
+    // error telling people to allow access they were never asked for.
+    //
+    // Everything else stays denied — the avatar picker uses a file input
+    // rather than getUserMedia, and nothing else here has a caller.
     value:
-      "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()",
+      "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=()",
   },
   // Isolates the browsing context from anything it opens or that opens it.
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
